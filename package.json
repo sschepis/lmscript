@@ -1,0 +1,51 @@
+{
+  "name": "lmscript",
+  "version": "0.1.0",
+  "description": "L-Script: A typed runtime for LLM orchestration — compiling structured prompts from TypeScript definitions",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "lsc": "./dist/src/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src/",
+    "example:security": "tsx src/examples/security-reviewer.ts",
+    "example:sentiment": "tsx src/examples/sentiment-analysis.ts",
+    "example:critique": "tsx src/examples/multi-agent-critique.ts",
+    "example:research": "tsx src/examples/research-agent.ts",
+    "example:tutor": "tsx src/examples/conversational-tutor.ts",
+    "example:batch": "tsx src/examples/batch-processor.ts",
+    "example:dsl": "tsx src/examples/dsl-demo.ts",
+    "example:production": "tsx src/examples/production-stack.ts",
+    "cli:compile": "tsx src/cli.ts compile",
+    "cli:list": "tsx src/cli.ts list",
+    "cli:validate": "tsx src/cli.ts validate",
+    "cli:parse": "tsx src/cli.ts parse"
+  },
+  "keywords": [
+    "llm",
+    "prompt-engineering",
+    "ai",
+    "typescript",
+    "schema-validation",
+    "orchestration"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "zod": "^3.25.76",
+    "zod-to-json-schema": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "tsx": "^4.15.0",
+    "typescript": "^5.5.0",
+    "vitest": "^1.6.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
