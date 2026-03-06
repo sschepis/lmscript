@@ -26,8 +26,8 @@ L-Script treats LLMs as **typed, non-deterministic processors** that require for
 
 ```typescript
 import { z } from "zod";
-import { LScriptRuntime, OpenAIProvider } from "lmscript";
-import type { LScriptFunction } from "lmscript";
+import { LScriptRuntime, OpenAIProvider } from "@sschepis/lmscript";
+import type { LScriptFunction } from "@sschepis/lmscript";
 
 // 1. Define your output schema
 const AnalysisSchema = z.object({
@@ -90,7 +90,7 @@ const MyFunction: LScriptFunction<string, typeof MySchema> = {
 Chain multiple LLM functions sequentially with [`Pipeline.from(fn1).pipe(fn2)`](src/pipeline.ts:1). The output of each step becomes the input to the next.
 
 ```typescript
-import { Pipeline } from "lmscript";
+import { Pipeline } from "@sschepis/lmscript";
 
 const pipeline = Pipeline.from(ExtractFacts).pipe(Summarize).pipe(GenerateReport);
 const result = await pipeline.run(runtime, rawData);
@@ -122,7 +122,7 @@ const ClassifyEmail: LScriptFunction<string, typeof ClassifySchema> = {
 [`ContextStack`](src/context.ts:1) manages conversation history with configurable token limits and pruning strategies:
 
 ```typescript
-import { ContextStack } from "lmscript";
+import { ContextStack } from "@sschepis/lmscript";
 
 const ctx = new ContextStack({ maxTokens: 4096, pruneStrategy: "fifo" });
 ctx.push({ role: "user", content: "Hello" });
@@ -179,7 +179,7 @@ const MyFunction: LScriptFunction<string, typeof Schema> = {
 [`MiddlewareManager`](src/middleware.ts:1) provides lifecycle hooks for cross-cutting concerns:
 
 ```typescript
-import { MiddlewareManager } from "lmscript";
+import { MiddlewareManager } from "@sschepis/lmscript";
 
 const middleware = new MiddlewareManager();
 middleware.use({
@@ -198,7 +198,7 @@ const runtime = new LScriptRuntime({ provider, middleware });
 [`ExecutionCache`](src/cache.ts:1) with [`MemoryCacheBackend`](src/cache.ts) memoizes LLM responses with TTL support:
 
 ```typescript
-import { ExecutionCache, MemoryCacheBackend } from "lmscript";
+import { ExecutionCache, MemoryCacheBackend } from "@sschepis/lmscript";
 
 const cache = new ExecutionCache(new MemoryCacheBackend(), {
   defaultTtlMs: 60_000, // 1 minute TTL
@@ -213,7 +213,7 @@ const runtime = new LScriptRuntime({ provider, cache });
 [`CostTracker`](src/cost-tracker.ts:1) monitors token usage with per-function breakdowns and budget limits:
 
 ```typescript
-import { CostTracker } from "lmscript";
+import { CostTracker } from "@sschepis/lmscript";
 
 const costTracker = new CostTracker({
   "gpt-4o": { inputPer1k: 0.005, outputPer1k: 0.015 },
@@ -235,7 +235,7 @@ costTracker.getUsageByFunction(); // per-function breakdown
 [`Logger`](src/logger.ts:1) with transports, spans, and log levels for execution tracing:
 
 ```typescript
-import { Logger, ConsoleTransport, LogLevel } from "lmscript";
+import { Logger, ConsoleTransport, LogLevel } from "@sschepis/lmscript";
 
 const logger = new Logger({
   level: LogLevel.DEBUG,
@@ -269,7 +269,7 @@ lsc parse <file.ls>     # Parse and print AST
 [`OpenAIProvider`](src/providers/openai.ts:1) works with OpenAI and any OpenAI-compatible API:
 
 ```typescript
-import { OpenAIProvider } from "lmscript";
+import { OpenAIProvider } from "@sschepis/lmscript";
 
 const provider = new OpenAIProvider({
   apiKey: process.env.OPENAI_API_KEY!,
@@ -282,7 +282,7 @@ const provider = new OpenAIProvider({
 [`AnthropicProvider`](src/providers/anthropic.ts:1) for Claude models:
 
 ```typescript
-import { AnthropicProvider } from "lmscript";
+import { AnthropicProvider } from "@sschepis/lmscript";
 
 const provider = new AnthropicProvider({
   apiKey: process.env.ANTHROPIC_API_KEY!,
@@ -294,7 +294,7 @@ const provider = new AnthropicProvider({
 [`GeminiProvider`](src/providers/gemini.ts:1) for Gemini models:
 
 ```typescript
-import { GeminiProvider } from "lmscript";
+import { GeminiProvider } from "@sschepis/lmscript";
 
 const provider = new GeminiProvider({
   apiKey: process.env.GEMINI_API_KEY!,
@@ -306,7 +306,7 @@ const provider = new GeminiProvider({
 [`OllamaProvider`](src/providers/ollama.ts:1) for local models via Ollama:
 
 ```typescript
-import { OllamaProvider } from "lmscript";
+import { OllamaProvider } from "@sschepis/lmscript";
 
 const provider = new OllamaProvider({
   apiKey: "unused", // Ollama doesn't require API keys
@@ -319,7 +319,7 @@ const provider = new OllamaProvider({
 [`ModelRouter`](src/router.ts:1) routes requests to different providers based on pattern-matched rules:
 
 ```typescript
-import { ModelRouter } from "lmscript";
+import { ModelRouter } from "@sschepis/lmscript";
 
 const router = new ModelRouter([
   { pattern: /^gpt-/, provider: openaiProvider },
@@ -336,7 +336,7 @@ const runtime = new LScriptRuntime({ provider: router });
 [`FallbackProvider`](src/providers/fallback.ts:1) automatically fails over to the next provider on error:
 
 ```typescript
-import { FallbackProvider } from "lmscript";
+import { FallbackProvider } from "@sschepis/lmscript";
 
 const provider = new FallbackProvider([
   openaiProvider,
@@ -355,7 +355,7 @@ const provider = new FallbackProvider([
 [`MockProvider`](src/testing/mock-provider.ts:1) with request recording and pattern-matched responses for unit testing:
 
 ```typescript
-import { MockProvider, createMockProvider } from "lmscript";
+import { MockProvider, createMockProvider } from "@sschepis/lmscript";
 
 const mock = createMockProvider([
   { input: /feedback/, output: { sentiment: "positive", summary: "Great!" } },
@@ -371,7 +371,7 @@ const runtime = new LScriptRuntime({ provider: mock });
 [`diffSchemaResult()`](src/testing/schema-diff.ts:1) provides field-by-field validation diffs for testing LLM output:
 
 ```typescript
-import { diffSchemaResult, formatSchemaDiff } from "lmscript";
+import { diffSchemaResult, formatSchemaDiff } from "@sschepis/lmscript";
 
 const diff = diffSchemaResult(schema, actualOutput);
 if (diff.length > 0) {
@@ -385,7 +385,7 @@ if (diff.length > 0) {
 [`captureSnapshot()`](src/testing/prompt-snapshot.ts:1) / [`compareSnapshots()`](src/testing/prompt-snapshot.ts) for prompt regression testing:
 
 ```typescript
-import { captureSnapshot, compareSnapshots, formatSnapshotDiff } from "lmscript";
+import { captureSnapshot, compareSnapshots, formatSnapshotDiff } from "@sschepis/lmscript";
 
 const baseline = captureSnapshot(myFunction, testInput);
 // ... make changes ...
@@ -402,7 +402,7 @@ if (diff.changed) {
 [`ChaosProvider`](src/testing/chaos.ts) and [`generateFuzzInputs()`](src/testing/chaos.ts) for resilience testing:
 
 ```typescript
-import { ChaosProvider, generateFuzzInputs } from "lmscript";
+import { ChaosProvider, generateFuzzInputs } from "@sschepis/lmscript";
 
 // Wrap a provider to inject random failures
 const chaos = new ChaosProvider(realProvider, {
@@ -445,7 +445,7 @@ const batchResults = await runtime.executeBatch(
 [`Session`](src/session.ts:1) manages multi-turn conversations with automatic history tracking:
 
 ```typescript
-import { Session, ContextStack } from "lmscript";
+import { Session, ContextStack } from "@sschepis/lmscript";
 
 const session = new Session(
   runtime,
@@ -472,7 +472,7 @@ import {
   dateStringTransformer,
   trimStringsTransformer,
   composeTransformers,
-} from "lmscript";
+} from "@sschepis/lmscript";
 
 // Apply a single transformer
 const result = await runtime.executeWithTransform(
@@ -516,7 +516,7 @@ llm SecurityReviewer(code: string) -> Critique {
 Use programmatically or via CLI:
 
 ```typescript
-import { compileFile } from "lmscript";
+import { compileFile } from "@sschepis/lmscript";
 
 const module = await compileFile("./security-review.ls");
 // module.functions — Map of compiled LScriptFunction objects
