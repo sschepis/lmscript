@@ -3,6 +3,8 @@
 export interface TypeFieldNode {
   name: string;
   type: string;              // "string", "number", "boolean"
+  optional?: boolean;        // field is optional (? syntax)
+  defaultValue?: unknown;    // default value (= value syntax)
   isArray: boolean;          // string[] → true
   constraints?: Record<string, number | string>;  // min=1, max=10, maxLength=100
   enumValues?: string[];     // "positive" | "negative" | "neutral"

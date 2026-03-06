@@ -3,14 +3,47 @@ import type { MiddlewareManager } from "./middleware.js";
 import type { ExecutionCache } from "./cache.js";
 import type { CostTracker } from "./cost-tracker.js";
 import type { Logger } from "./logger.js";
+import type { RateLimiter } from "./rate-limiter.js";
+import type { TokenCounter } from "./tokenizer.js";
 
 // ── Chat message types ──────────────────────────────────────────────
 
 export type Role = "system" | "user" | "assistant";
 
+/** A text content block */
+export interface TextContent {
+  type: "text";
+  text: string;
+}
+
+/** An image content block from a URL */
+export interface ImageUrlContent {
+  type: "image_url";
+  image_url: {
+    url: string;
+    /** How the model should process the image. Default varies by provider. */
+    detail?: "auto" | "low" | "high";
+  };
+}
+
+/** An image content block from base64-encoded data */
+export interface ImageBase64Content {
+  type: "image_base64";
+  /** MIME type (e.g., "image/png", "image/jpeg") */
+  mediaType: string;
+  /** Base64-encoded image data */
+  data: string;
+}
+
+/** A content block in a multi-modal message */
+export type ContentBlock = TextContent | ImageUrlContent | ImageBase64Content;
+
+/** Message content can be a simple string or an array of content blocks */
+export type MessageContent = string | ContentBlock[];
+
 export interface ChatMessage {
   role: Role;
-  content: string;
+  content: MessageContent;
 }
 
 // ── LLM Provider abstraction ────────────────────────────────────────
@@ -25,6 +58,13 @@ export interface LLMRequest {
   messages: ChatMessage[];
   temperature: number;
   jsonMode: boolean;
+  /** Optional JSON Schema for native structured output. When provided, providers
+   * that support it will use response_format with json_schema type. */
+  jsonSchema?: {
+    name: string;
+    schema: object;
+    strict?: boolean;
+  };
   tools?: Array<{ name: string; description: string; parameters: object }>;
 }
 
@@ -42,6 +82,8 @@ export interface LLMProvider {
   readonly name: string;
   chat(request: LLMRequest): Promise<LLMResponse>;
   chatStream?(request: LLMRequest): AsyncIterable<string>;
+  /** Whether this provider supports native JSON Schema structured output */
+  readonly supportsStructuredOutput?: boolean;
 }
 
 // ── L-Script Function definition ────────────────────────────────────
@@ -79,6 +121,20 @@ export interface LScriptFunction<I, O extends z.ZodType> {
 
   /** Optional tool definitions for LLM function calling */
   tools?: ToolDefinition[];
+
+  /** Optional per-function retry backoff configuration */
+  retryConfig?: RetryConfig;
+}
+
+// ── Retry configuration ─────────────────────────────────────────────
+
+export interface RetryConfig {
+  /** Base delay in ms for exponential backoff. Default: 1000 */
+  baseDelay?: number;
+  /** Maximum delay in ms. Default: 30000 */
+  maxDelay?: number;
+  /** Jitter factor (0-1). Adds randomness to prevent thundering herd. Default: 0.2 */
+  jitterFactor?: number;
 }
 
 // ── Runtime configuration ───────────────────────────────────────────
@@ -110,6 +166,12 @@ export interface RuntimeConfig {
 
   /** Optional structured logger for execution tracing */
   logger?: Logger;
+
+  /** Optional retry backoff configuration */
+  retryConfig?: RetryConfig;
+
+  /** Optional rate limiter for throttling API requests */
+  rateLimiter?: RateLimiter;
 }
 
 // ── Context / Memory types ──────────────────────────────────────────
@@ -120,6 +182,9 @@ export interface ContextStackOptions {
 
   /** Strategy for pruning when token limit is reached */
   pruneStrategy?: "fifo" | "summarize";
+
+  /** Custom token counter. Defaults to built-in estimator. */
+  tokenCounter?: TokenCounter;
 }
 
 // ── Execution result wrapper ────────────────────────────────────────

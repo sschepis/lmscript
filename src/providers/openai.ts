@@ -1,5 +1,6 @@
 import type { LLMRequest, LLMResponse, LLMProviderConfig } from "../types.js";
 import { BaseLLMProvider } from "./base.js";
+import { toOpenAIContent } from "../content.js";
 
 interface OpenAIChoice {
   message: {
@@ -28,6 +29,7 @@ interface OpenAIResponseBody {
  */
 export class OpenAIProvider extends BaseLLMProvider {
   readonly name = "openai";
+  readonly supportsStructuredOutput = true;
 
   constructor(config: LLMProviderConfig) {
     super(config);
@@ -40,11 +42,23 @@ export class OpenAIProvider extends BaseLLMProvider {
   protected buildRequestBody(request: LLMRequest): Record<string, unknown> {
     const body: Record<string, unknown> = {
       model: request.model,
-      messages: request.messages,
+      messages: request.messages.map((m) => ({
+        role: m.role,
+        content: toOpenAIContent(m.content),
+      })),
       temperature: request.temperature,
     };
 
-    if (request.jsonMode) {
+    if (request.jsonSchema) {
+      body.response_format = {
+        type: "json_schema",
+        json_schema: {
+          name: request.jsonSchema.name,
+          schema: request.jsonSchema.schema,
+          strict: request.jsonSchema.strict ?? true,
+        },
+      };
+    } else if (request.jsonMode) {
       body.response_format = { type: "json_object" };
     }
 

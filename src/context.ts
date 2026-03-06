@@ -1,12 +1,7 @@
 import type { ChatMessage, ContextStackOptions } from "./types.js";
-
-/**
- * Rough token estimator: ~4 characters per token.
- * For production use, replace with tiktoken or a model-specific tokenizer.
- */
-function estimateTokens(text: string): number {
-  return Math.ceil(text.length / 4);
-}
+import type { TokenCounter } from "./tokenizer.js";
+import { estimateTokens as defaultEstimateTokens } from "./tokenizer.js";
+import { estimateContentTokens } from "./content.js";
 
 /** Type for an async summarizer function */
 export type SummarizerFn = (messages: ChatMessage[]) => Promise<string>;
@@ -24,10 +19,12 @@ export class ContextStack {
   private maxTokens: number;
   private pruneStrategy: "fifo" | "summarize";
   private summarizer: SummarizerFn | null = null;
+  private tokenCounter: TokenCounter;
 
   constructor(options: ContextStackOptions = {}) {
     this.maxTokens = options.maxTokens ?? 4096;
     this.pruneStrategy = options.pruneStrategy ?? "fifo";
+    this.tokenCounter = options.tokenCounter ?? defaultEstimateTokens;
   }
 
   /**
@@ -59,7 +56,7 @@ export class ContextStack {
   /** Get estimated total tokens in the current context. */
   getTokenCount(): number {
     return this.messages.reduce(
-      (sum, msg) => sum + estimateTokens(msg.content),
+      (sum, msg) => sum + estimateContentTokens(msg.content, this.tokenCounter),
       0
     );
   }

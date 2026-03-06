@@ -8,14 +8,17 @@ import type {
   ExecutionResult,
   LLMProvider,
   LLMRequest,
+  LLMResponse,
   LScriptFunction,
   ParallelResult,
   ParallelTaskResult,
+  RetryConfig,
   RuntimeConfig,
   StreamResult,
   ToolCall,
   ToolDefinition,
 } from "./types.js";
+import type { AgentConfig, AgentResult } from "./agent.js";
 import { MiddlewareManager } from "./middleware.js";
 import type { ExecutionCache } from "./cache.js";
 import { BudgetExceededError } from "./cost-tracker.js";
@@ -25,8 +28,33 @@ import { diffSchemaResult, formatSchemaDiff } from "./testing/schema-diff.js";
 import { ContextStack } from "./context.js";
 import { Session } from "./session.js";
 import type { OutputTransformer } from "./transformer.js";
+import type { RateLimiter } from "./rate-limiter.js";
 
 const MAX_TOOL_CALL_DEPTH = 5;
+
+const DEFAULT_RETRY_CONFIG: Required<RetryConfig> = {
+  baseDelay: 1000,
+  maxDelay: 30000,
+  jitterFactor: 0.2,
+};
+
+/**
+ * Compute the delay before a retry attempt using exponential backoff with jitter.
+ * delay = min(baseDelay * 2^attempt, maxDelay) + random * jitterFactor * delay
+ */
+function computeRetryDelay(attempt: number, config: RetryConfig): number {
+  const baseDelay = config.baseDelay ?? DEFAULT_RETRY_CONFIG.baseDelay;
+  const maxDelay = config.maxDelay ?? DEFAULT_RETRY_CONFIG.maxDelay;
+  const jitterFactor = config.jitterFactor ?? DEFAULT_RETRY_CONFIG.jitterFactor;
+
+  const exponentialDelay = Math.min(baseDelay * Math.pow(2, attempt), maxDelay);
+  const jitter = Math.random() * jitterFactor * exponentialDelay;
+  return exponentialDelay + jitter;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 /**
  * LScriptRuntime is the core execution engine.
@@ -58,6 +86,12 @@ export class LScriptRuntime {
   /** Structured logger for execution tracing. */
   private logger: Logger;
 
+  /** Optional retry backoff configuration. */
+  private retryConfig?: RetryConfig;
+
+  /** Optional rate limiter for throttling API requests. */
+  private rateLimiter?: RateLimiter;
+
   constructor(config: RuntimeConfig) {
     this.provider = config.provider;
     this.defaultTemperature = config.defaultTemperature ?? 0.7;
@@ -68,6 +102,8 @@ export class LScriptRuntime {
     this.costTracker = config.costTracker;
     this.budget = config.budget;
     this.logger = config.logger ?? new Logger({ level: LogLevel.SILENT });
+    this.retryConfig = config.retryConfig;
+    this.rateLimiter = config.rateLimiter;
   }
 
   /**
@@ -153,9 +189,18 @@ export class LScriptRuntime {
     // ── Run onBeforeExecute hooks ──
     await this.middleware.runBeforeExecute(execCtx);
 
+    // Resolve retry config: function-level > runtime-level > defaults
+    const effectiveRetryConfig = fn.retryConfig ?? this.retryConfig ?? {};
+
     let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+      // Apply backoff delay before retry attempts (not before the first attempt)
+      if (attempt > 1) {
+        const delay = computeRetryDelay(attempt - 2, effectiveRetryConfig);
+        await sleep(delay);
+      }
+
       execCtx.attempt = attempt;
       span.log(LogLevel.DEBUG, `Attempt ${attempt}/${maxRetries + 1}`, { fn: fn.name, model: fn.model, attempt });
 
@@ -183,6 +228,15 @@ export class LScriptRuntime {
           messages,
           temperature,
           jsonMode: true,
+          ...(this.provider.supportsStructuredOutput
+            ? {
+                jsonSchema: {
+                  name: fn.name.replace(/[^a-zA-Z0-9_-]/g, "_"),
+                  schema: jsonSchema as object,
+                  strict: false,
+                },
+              }
+            : {}),
           ...(requestTools ? { tools: requestTools } : {}),
         };
 
@@ -342,6 +396,15 @@ export class LScriptRuntime {
       messages,
       temperature,
       jsonMode: true,
+      ...(this.provider.supportsStructuredOutput
+        ? {
+            jsonSchema: {
+              name: fn.name.replace(/[^a-zA-Z0-9_-]/g, "_"),
+              schema: jsonSchema as object,
+              strict: false,
+            },
+          }
+        : {}),
     };
 
     let accumulated = "";
@@ -447,12 +510,18 @@ export class LScriptRuntime {
     let lastUsage: ExecutionResult<unknown>["usage"] = undefined;
 
     for (let depth = 0; depth <= MAX_TOOL_CALL_DEPTH; depth++) {
+      // ── Rate limit: wait for slot before making API call ──
+      await this.rateLimiter?.acquire();
+
       const response = await this.provider.chat({
         ...request,
         messages: currentMessages,
       });
 
       lastUsage = response.usage;
+
+      // ── Rate limit: report token usage after API call ──
+      this.rateLimiter?.reportTokens(response.usage?.totalTokens ?? 0);
 
       // If no tool calls in response, return the final response
       if (!response.toolCalls || response.toolCalls.length === 0 || !tools || tools.length === 0) {
@@ -744,9 +813,18 @@ export class LScriptRuntime {
 
     await this.middleware.runBeforeExecute(execCtx);
 
+    // Resolve retry config: function-level > runtime-level > defaults
+    const effectiveRetryConfig = fn.retryConfig ?? this.retryConfig ?? {};
+
     let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+      // Apply backoff delay before retry attempts (not before the first attempt)
+      if (attempt > 1) {
+        const delay = computeRetryDelay(attempt - 2, effectiveRetryConfig);
+        await sleep(delay);
+      }
+
       execCtx.attempt = attempt;
 
       const messages: ChatMessage[] = [
@@ -773,6 +851,15 @@ export class LScriptRuntime {
           messages,
           temperature,
           jsonMode: true,
+          ...(this.provider.supportsStructuredOutput
+            ? {
+                jsonSchema: {
+                  name: fn.name.replace(/[^a-zA-Z0-9_-]/g, "_"),
+                  schema: jsonSchema as object,
+                  strict: false,
+                },
+              }
+            : {}),
           ...(requestTools ? { tools: requestTools } : {}),
         };
 
@@ -831,6 +918,292 @@ export class LScriptRuntime {
     await this.middleware.runError(execCtx, finalError);
     span.end();
     throw finalError;
+  }
+
+  // ── Agent Loop (Iterative Tool Calling) ─────────────────────────────
+
+  /**
+   * Execute a function with an iterative agent loop.
+   *
+   * Unlike `execute()`, which handles tool calls in a single pass,
+   * `executeAgent()` repeatedly calls the LLM, feeding tool results back
+   * as user messages until the LLM produces a final response with no
+   * tool calls, or `maxIterations` is reached.
+   */
+  async executeAgent<I, O extends z.ZodType>(
+    fn: LScriptFunction<I, O>,
+    input: I,
+    agentConfig?: AgentConfig
+  ): Promise<AgentResult<z.infer<O>>> {
+    const maxIterations = agentConfig?.maxIterations ?? 10;
+    const onToolCall = agentConfig?.onToolCall ?? (() => {});
+    const onIteration = agentConfig?.onIteration ?? (() => {});
+
+    const span = this.logger.startSpan(`executeAgent:${fn.name}`);
+
+    const temperature = fn.temperature ?? this.defaultTemperature;
+    const jsonSchema = zodToJsonSchema(fn.schema, { target: "openApi3" });
+
+    const schemaInstruction = [
+      "YOU MUST RESPOND ONLY WITH VALID JSON.",
+      "YOUR RESPONSE MUST CONFORM TO THIS JSON SCHEMA:",
+      JSON.stringify(jsonSchema, null, 2),
+      "DO NOT include any text outside the JSON object.",
+    ].join("\n");
+
+    const systemContent = `${fn.system}\n\n${schemaInstruction}`;
+    const userContent = fn.prompt(input);
+
+    // Build few-shot example messages if provided
+    const exampleMessages: ChatMessage[] = [];
+    if (fn.examples && fn.examples.length > 0) {
+      for (const example of fn.examples) {
+        exampleMessages.push({
+          role: "user",
+          content: fn.prompt(example.input),
+        });
+        exampleMessages.push({
+          role: "assistant",
+          content: JSON.stringify(example.output),
+        });
+      }
+    }
+
+    // Build tool definitions for the request
+    const requestTools = this.buildRequestTools(fn.tools);
+
+    // Build initial messages
+    const messages: ChatMessage[] = [
+      { role: "system", content: systemContent },
+      ...exampleMessages,
+      { role: "user", content: userContent },
+    ];
+
+    const allToolCalls: ToolCall[] = [];
+    const totalUsage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
+    let hasUsage = false;
+    let finalContent = "";
+
+    const effectiveRetryConfig = fn.retryConfig ?? this.retryConfig ?? {};
+    const maxRetries = fn.maxRetries ?? this.defaultMaxRetries;
+
+    for (let iteration = 1; iteration <= maxIterations; iteration++) {
+      // ── Rate limit: wait for slot before making API call ──
+      await this.rateLimiter?.acquire();
+
+      const request: LLMRequest = {
+        model: fn.model,
+        messages: [...messages],
+        temperature,
+        jsonMode: true,
+        ...(this.provider.supportsStructuredOutput
+          ? {
+              jsonSchema: {
+                name: fn.name.replace(/[^a-zA-Z0-9_-]/g, "_"),
+                schema: jsonSchema as object,
+                strict: false,
+              },
+            }
+          : {}),
+        ...(requestTools ? { tools: requestTools } : {}),
+      };
+
+      let response: LLMResponse | undefined;
+      let apiError: Error | null = null;
+
+      // Inner retry loop for API/Network failures
+      for (let apiAttempt = 1; apiAttempt <= maxRetries + 1; apiAttempt++) {
+        if (apiAttempt > 1) {
+          const delay = computeRetryDelay(apiAttempt - 2, effectiveRetryConfig);
+          await sleep(delay);
+        }
+        try {
+          response = await this.provider.chat(request);
+          apiError = null;
+          break;
+        } catch (err) {
+          if (err instanceof BudgetExceededError) throw err;
+          apiError = err instanceof Error ? err : new Error(String(err));
+          span.log(LogLevel.WARN, `Agent API call failed: ${apiError.message}`, { attempt: apiAttempt });
+        }
+      }
+
+      if (apiError || !response) {
+        span.end();
+        throw apiError || new Error("Unknown API error");
+      }
+
+      // ── Rate limit: report token usage after API call ──
+      this.rateLimiter?.reportTokens(response.usage?.totalTokens ?? 0);
+
+      // Accumulate usage
+      if (response.usage) {
+        hasUsage = true;
+        totalUsage.promptTokens += response.usage.promptTokens;
+        totalUsage.completionTokens += response.usage.completionTokens;
+        totalUsage.totalTokens += response.usage.totalTokens;
+      }
+
+      // Track usage with cost tracker
+      if (this.costTracker && response.usage) {
+        this.costTracker.trackUsage(fn.name, response.usage);
+      }
+
+      finalContent = response.content;
+
+      // Call onIteration callback
+      const iterationResult = await Promise.resolve(
+        onIteration(iteration, response.content)
+      );
+      if (iterationResult === false) {
+        span.log(LogLevel.INFO, `Agent loop stopped early by onIteration at iteration ${iteration}`, { fn: fn.name });
+        break;
+      }
+
+      // If no tool calls, this is the final response. Validate it!
+      if (!response.toolCalls || response.toolCalls.length === 0 || !fn.tools || fn.tools.length === 0) {
+        let parsed: unknown;
+        let parseError: Error | null = null;
+        try {
+          parsed = this.parseJSON(finalContent);
+        } catch (err) {
+          parseError = err instanceof Error ? err : new Error(String(err));
+        }
+
+        if (!parseError) {
+          const validated = fn.schema.safeParse(parsed);
+          if (validated.success) {
+            span.log(LogLevel.INFO, `Agent loop completed at iteration ${iteration} (no tool calls)`, { fn: fn.name, iteration });
+            span.end();
+            return {
+              data: validated.data,
+              toolCalls: allToolCalls,
+              iterations: allToolCalls.length > 0 ? Math.min(iteration, allToolCalls.length + 1) : 1,
+              ...(hasUsage ? { usage: totalUsage } : {}),
+            };
+          } else {
+            const zodErrorMsg = validated.error.issues
+              .map((i) => `${i.path.join(".")}: ${i.message}`)
+              .join("; ");
+            parseError = new Error(zodErrorMsg);
+          }
+        }
+
+        // Schema or parsing failed
+        span.log(LogLevel.WARN, `Agent loop schema validation failed at iteration ${iteration}: ${parseError.message}`, { fn: fn.name });
+
+        // If we still have iterations left, feed the error back as a user message to retry
+        if (iteration < maxIterations) {
+          messages.push({
+            role: "assistant",
+            content: response.content || "",
+          });
+          messages.push({
+            role: "user",
+            content: [
+              "Your previous response did not match the required schema.",
+              `Error: ${parseError.message}`,
+              "Please fix your response and try again. Return ONLY valid JSON.",
+            ].join("\n"),
+          });
+          continue; // Next iteration will try to produce valid JSON
+        } else {
+          // Last iteration failed, break and throw later
+          break;
+        }
+      }
+
+      // Process tool calls
+      const toolResultParts: string[] = [];
+
+      // Append assistant message
+      messages.push({
+        role: "assistant",
+        content: response.content || JSON.stringify(response.toolCalls),
+      });
+
+      let earlyStop = false;
+
+      for (const tc of response.toolCalls) {
+        const toolDef = fn.tools.find((t) => t.name === tc.name);
+        if (!toolDef) {
+          this.logger.warn(`Unknown tool called: ${tc.name}`, { tool: tc.name });
+          toolResultParts.push(`[${tc.name}]: {"error": "Unknown tool"}`);
+          continue;
+        }
+
+        try {
+          const parsedArgs = JSON.parse(tc.arguments);
+          const validatedArgs = toolDef.parameters.parse(parsedArgs);
+          const toolResult = await Promise.resolve(toolDef.execute(validatedArgs));
+
+          const toolCall: ToolCall = {
+            name: tc.name,
+            arguments: parsedArgs,
+            result: toolResult,
+          };
+          allToolCalls.push(toolCall);
+          toolResultParts.push(`[${tc.name}]: ${JSON.stringify(toolResult)}`);
+
+          // Call onToolCall callback
+          const toolCallResult = await Promise.resolve(onToolCall(toolCall));
+          if (toolCallResult === false) {
+            earlyStop = true;
+            span.log(LogLevel.INFO, `Agent loop stopped early by onToolCall`, { fn: fn.name, tool: tc.name });
+            break;
+          }
+        } catch (err) {
+          const error = err instanceof Error ? err : new Error(String(err));
+          this.logger.error(`Tool execution error for ${tc.name}: ${error.message}`, { tool: tc.name });
+
+          const toolCall: ToolCall = {
+            name: tc.name,
+            arguments: tc.arguments,
+            result: { error: error.message },
+          };
+          allToolCalls.push(toolCall);
+          toolResultParts.push(`[${tc.name}]: {"error": ${JSON.stringify(error.message)}}`);
+        }
+      }
+
+      if (earlyStop) {
+        break;
+      }
+
+      // Append tool results as a user message (portable across providers)
+      messages.push({
+        role: "user",
+        content: `Tool results:\n\n${toolResultParts.join("\n")}\n\nPlease continue with the analysis using these tool results.`,
+      });
+
+      // Check if we've hit max iterations
+      if (iteration === maxIterations) {
+        span.log(LogLevel.WARN, `Agent loop reached maxIterations (${maxIterations})`, { fn: fn.name });
+      }
+    }
+
+    // Parse and validate the final response
+    const parsed = this.parseJSON(finalContent);
+    const validated = fn.schema.safeParse(parsed);
+
+    if (!validated.success) {
+      const zodErrorMsg = validated.error.issues
+        .map((i) => `${i.path.join(".")}: ${i.message}`)
+        .join("; ");
+      span.end();
+      throw new Error(
+        `[lmscript] Agent loop for "${fn.name}" produced invalid output. Error: ${zodErrorMsg}`
+      );
+    }
+
+    span.end();
+
+    return {
+      data: validated.data,
+      toolCalls: allToolCalls,
+      iterations: allToolCalls.length > 0 ? Math.min(maxIterations, allToolCalls.length + 1) : 1,
+      ...(hasUsage ? { usage: totalUsage } : {}),
+    };
   }
 
   private log(message: string): void {

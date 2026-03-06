@@ -1,8 +1,10 @@
 import type { LLMRequest, LLMResponse, LLMProviderConfig } from "../types.js";
 import { BaseLLMProvider } from "./base.js";
+import { toGeminiParts, extractText } from "../content.js";
 
 interface GeminiPart {
-  text: string;
+  text?: string;
+  inline_data?: { mime_type: string; data: string };
 }
 
 interface GeminiContent {
@@ -36,6 +38,7 @@ interface GeminiResponseBody {
  */
 export class GeminiProvider extends BaseLLMProvider {
   readonly name = "gemini";
+  readonly supportsStructuredOutput = true;
 
   constructor(config: LLMProviderConfig) {
     super(config);
@@ -73,10 +76,10 @@ export class GeminiProvider extends BaseLLMProvider {
 
     for (const msg of request.messages) {
       if (msg.role === "system") {
-        systemInstruction = { parts: [{ text: msg.content }] };
+        systemInstruction = { parts: [{ text: extractText(msg.content) }] };
       } else {
         contents.push({
-          parts: [{ text: msg.content }],
+          parts: toGeminiParts(msg.content) as GeminiPart[],
           role: msg.role === "assistant" ? "model" : "user",
         });
       }
@@ -93,7 +96,12 @@ export class GeminiProvider extends BaseLLMProvider {
       body.systemInstruction = systemInstruction;
     }
 
-    if (request.jsonMode) {
+    if (request.jsonSchema) {
+      (body.generationConfig as Record<string, unknown>).responseMimeType =
+        "application/json";
+      (body.generationConfig as Record<string, unknown>).responseSchema =
+        request.jsonSchema.schema;
+    } else if (request.jsonMode) {
       (body.generationConfig as Record<string, unknown>).responseMimeType =
         "application/json";
     }

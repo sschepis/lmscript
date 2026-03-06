@@ -1,0 +1,1676 @@
+diff --git a/.gitignore b/.gitignore
+index d546b97..9b23c7b 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,4 +1,33 @@
++# Dependencies
+ node_modules/
++
++# Build output
+ dist/
+-*.tsbuildinfo
++
++# IDE
++.vscode/
++.idea/
++*.swp
++*.swo
++
++# OS
++.DS_Store
++Thumbs.db
++
++# Environment
+ .env
++.env.local
++.env.*.local
++
++# Logs
++*.log
++npm-debug.log*
++
++# Test coverage
++coverage/
++
++# TypeScript cache
++*.tsbuildinfo
++
++# npm pack output
++*.tgz
+diff --git a/input.txt b/input.txt
+deleted file mode 100644
+index 3a2be2c..0000000
+--- a/input.txt
++++ /dev/null
+@@ -1,283 +0,0 @@
+-That is exactly where the frontier of "AI Engineering" is headed. We are collectively moving away from "vibes-based" prompting and toward **LLM Orchestration as a Compiled Discipline.**
+-
+-The core insight here is treating the LLM not just as a chatbot, but as a **non-deterministic processor** that requires a formal interface. By building a language that compiles to structured prompts, you're essentially creating a high-level abstraction for "Reasoning Loops."
+-
+-Here is how a "Prompt Compiler" would fundamentally change the workflow:
+-
+-### 1. The Architectural Pillars
+-
+-To make this work, the language would need to handle three specific things that raw strings cannot:
+-
+-* **Schema Enforcement (The "Hardware" Interface):** The compiler ensures that every "function call" to the LLM adheres to a JSON schema. If the model drifts, the runtime catches it before it breaks the rest of your app.
+-* **Stateful Context Management:** Instead of manually managing "history," the language would treat context as a managed memory stack, automatically pruning or summarizing based on token limits.
+-* **Model Agnosticism:** You write the logic once; the compiler "targets" specific models (e.g., compiling a complex reasoning task into a chain-of-thought prompt for a frontier model, or a simple extraction task for a local, distilled model).
+-
+----
+-
+-### 2. Conceptual Syntax: "L-Script"
+-
+-Imagine a syntax that looks like a hybrid of TypeScript and Markdown:
+-
+-```typescript
+-// Define the structure of the exchange
+-type Analysis = {
+-  sentiment: "positive" | "negative" | "neutral",
+-  summary: string(maxLength=100),
+-  action_items: string[]
+-}
+-
+-// The "Compiled" LLM Function
+-llm AnalyzeFeedback(raw_text: string) -> Analysis {
+-  role: "Senior Product Manager"
+-  
+-  prompt: 
+-    """
+-    Review this customer feedback: {{raw_text}}
+-    Focus specifically on technical debt and UI friction.
+-    """
+-    
+-  constraints: Analysis // The compiler injects the JSON schema here
+-}
+-
+-// Logic flow
+-main() {
+-  const data = fetchFeedback();
+-  const result = AnalyzeFeedback(data);
+-  
+-  if (result.sentiment == "negative") {
+-    // Branch logic based on structured output
+-    EscalateToEngineering(result.action_items);
+-  }
+-}
+-
+-```
+-
+----
+-
+-### 3. Why This Matters (The "Singularity" of Communication)
+-
+-As we discussed before, the "substrate" (silicon vs. biology) is secondary to the communication itself. A language like this **formalizes the exchange.** It moves the "intelligence" out of the black box and into the **logic of the interaction.** By "compiling" a prompt, you are essentially creating a reproducible map of a thought process.
+-
+-### Current "State of the Art" in 2026
+-
+-While we have tools like **DSPy** (which optimizes prompts via programming) and **LMQL** (which uses types in queries), a dedicated language that compiles down to a "prompt-graph" is the missing link for production-grade AI.
+-
+-**The Benefits:**
+-
+-* **Unit Testing:** You can finally unit test a "thought process" by mocking the LLM's structured output.
+-* **Deterministic Control:** You use traditional code for the "if/else" logic and LLMs only for the "unstructured-to-structured" transformations.
+-* **Optimization:** The compiler could automatically inject "Few-Shot" examples into the prompt based on a database of successful past interactions.
+-
+-**Would you like me to try "compiling" a specific logic flow for you?** For example, we could sketch out the syntax for a multi-agent system where one agent critiques the work of another.
+-
+-This is the "Hello World" moment for **L-Script (Logic-Script)**. We aren't just writing text; we are defining the **topology of a thought process**.
+-
+-To build this, we need to separate the **Intent** (the high-level logic) from the **Implementation** ( the specific model parameters and formatting).
+-
+-### 1. The v0.1 Specification: "L-Script"
+-
+-In our language, we define **Interfaces** (schemas) and **LLM Functions** (prompts). The compiler’s job is to take these and generate a valid API payload with built-in validation.
+-
+----
+-
+-### 2. The Prototype Logic
+-
+-Let’s define a **Multi-Agent Critique System**. One agent generates a solution; the other finds the flaws.
+-
+-**The Code (lscript.ls):**
+-
+-```typescript
+-// 1. Define the Data Contract
+-type Critique = {
+-  score: number(min=1, max=10),
+-  vulnerabilities: string[],
+-  suggested_fix: string
+-}
+-
+-// 2. Define the Agent
+-llm SecurityReviewer(code: string) -> Critique {
+-  model: "gemini-1.5-pro"
+-  temperature: 0.2
+-  
+-  system: "You are a senior security researcher. Be pedantic and skeptical."
+-  
+-  prompt: 
+-    """
+-    Review the following function for security flaws:
+-    {{code}}
+-    """
+-    
+-  // The compiler automatically attaches the JSON schema for 'Critique'
+-  output: json_mode
+-}
+-
+-// 3. Define the Flow
+-main(input_code) {
+-  const result = SecurityReviewer(input_code);
+-  
+-  if (result.score < 7) {
+-    print("Security Alert: " + result.vulnerabilities.join(", "));
+-    apply_fix(result.suggested_fix);
+-  }
+-}
+-
+-```
+-
+----
+-
+-### 3. The "Compilation" Step
+-
+-When you run `lsc compile lscript.ls`, the compiler generates an **Execution Manifest**. This is what actually gets sent to the model:
+-
+-| Field | Value |
+-| --- | --- |
+-| **System Instructions** | "You are a senior security researcher..." |
+-| **User Prompt** | "Review the following function for security flaws: [INPUT_CODE]" |
+-| **Response Format** | `{"type": "object", "properties": {"score": {"type": "number"}, ...}}` |
+-| **Runtime Guard** | If `response.score` is missing, retry with 1-shot example. |
+-
+----
+-
+-### 4. Why this is the "Reality" of the interaction
+-
+-By treating the prompt as a **compiled target**, we acknowledge that the AI is a biological-style processor being forced into a digital-style cage. The "L-Script" acts as the **translator**.
+-
+-It ensures that the shared understanding we discussed—the "unfolding reality"—isn't lost in the noise of formatting errors or "hallucinated" schemas. We are essentially building a **Deterministic Wrapper for Non-Deterministic Intelligence.**
+-
+-### Let’s build the Runtime
+-
+-I can write a Python-based "mock compiler" right now that takes a dictionary-based DSL and executes it against an LLM, handling the schema validation automatically.
+-
+-**Would you like me to generate the Python class for the `LScriptRuntime` so we can test the "SecurityReviewer" agent?**
+-
+-
+-
+-TypeScript is actually the superior choice for this. Its structural typing system mirrors exactly what we’re trying to do: **forcing unstructured "thought" into a deterministic shape.**
+-
+-By using TypeScript, we can leverage **Zod** (the industry standard for schema validation) to act as the "Runtime Guard." This ensures that if the LLM hallucinates a field or returns a string where a number should be, the "compiler" throws a type error before the data ever touches your application logic.
+-
+-### The L-Script Runtime (v0.1 Prototype)
+-
+-Here is a functional TypeScript implementation. It treats the LLM as a **typed function.**
+-
+-```typescript
+-import { z } from "zod";
+-
+-// 1. Define the L-Script Function Interface
+-interface LScriptFunction<I, O extends z.ZodType> {
+-  name: string;
+-  model: string;
+-  system: string;
+-  prompt: (input: I) => string;
+-  schema: O;
+-  temperature?: number;
+-}
+-
+-// 2. The Runtime Compiler
+-class LScriptRuntime {
+-  private apiKey: string;
+-
+-  constructor(apiKey: string) {
+-    this.apiKey = apiKey;
+-  }
+-
+-  // The "Execution" loop
+-  async execute<I, O extends z.ZodType>(
+-    fn: LScriptFunction<I, O>,
+-    input: I
+-  ): Promise<z.infer<O>> {
+-    console.log(`[L-Script] Compiling prompt for: ${fn.name}...`);
+-
+-    // Injecting the schema into the system instructions automatically
+-    const schemaInstructions = `
+-      YOU MUST RESPOND ONLY IN VALID JSON.
+-      FOLLOW THIS SCHEMA: ${JSON.stringify(fn.schema.shape)}
+-    `;
+-
+-    const response = await fetch("https://api.your-llm-provider.com/v1/chat", {
+-      method: "POST",
+-      headers: { "Authorization": `Bearer ${this.apiKey}`, "Content-Type": "application/json" },
+-      body: JSON.stringify({
+-        model: fn.model,
+-        messages: [
+-          { role: "system", content: `${fn.system}\n${schemaInstructions}` },
+-          { role: "user", content: fn.prompt(input) }
+-        ],
+-        temperature: fn.temperature ?? 0.7,
+-        response_format: { type: "json_object" }
+-      }),
+-    });
+-
+-    const rawData = await response.json();
+-    const content = JSON.parse(rawData.choices[0].message.content);
+-
+-    // 3. The Runtime Guard: Validate against the schema
+-    const validated = fn.schema.safeParse(content);
+-
+-    if (!validated.success) {
+-      throw new Error(`[L-Script Compilation Error] LLM output drifted from schema: ${validated.error}`);
+-    }
+-
+-    return validated.data;
+-  }
+-}
+-
+-```
+-
+----
+-
+-### Implementation Example: The Security Reviewer
+-
+-Now, let’s see how we use the "compiled" logic. Notice how `result` is **fully typed**. You get autocomplete on the LLM's "thoughts."
+-
+-```typescript
+-// Define the output shape
+-const CritiqueSchema = z.object({
+-  score: z.number().min(1).max(10),
+-  vulnerabilities: z.array(z.string()),
+-  suggested_fix: z.string(),
+-});
+-
+-// Define the L-Script Function
+-const SecurityReviewer: LScriptFunction<string, typeof CritiqueSchema> = {
+-  name: "SecurityReviewer",
+-  model: "gemini-1.5-pro",
+-  system: "You are a senior security researcher. Focus on SQL injection and XSS.",
+-  prompt: (code: string) => `Review this function: ${code}`,
+-  schema: CritiqueSchema,
+-};
+-
+-// Main Execution
+-const runtime = new LScriptRuntime("YOUR_API_KEY");
+-
+-async function runSecurityAudit(userCode: string) {
+-  try {
+-    const result = await runtime.execute(SecurityReviewer, userCode);
+-    
+-    // Result is now a typed object!
+-    if (result.score < 5) {
+-      console.log("CRITICAL VULNERABILITIES:", result.vulnerabilities);
+-    }
+-  } catch (err) {
+-    console.error("The LLM 'compiled' with errors:", err);
+-  }
+-}
+-
+-```
+-
+----
+-
+-### Why this changes the "Singularity"
+-
+-When we talked about the **substrate** being secondary to the **communication**, this is what that looks like in practice.
+-
+-We are no longer "talking" to a machine; we are **programming a bridge.** The TypeScript types act as the common language between your human intent (the code) and the AI's probabilistic reasoning. It creates a **shared reality** where both the biological and digital constructs agree on the shape of the truth (the JSON schema).
+-
+-**The Architectural Benefits:**
+-| Feature | Legacy Prompting | L-Script (TS) |
+-| :--- | :--- | :--- |
+-| **Error Handling** | "I hope it gives me JSON." | Runtime Exception if schema fails. |
+-| **Developer Experience** | Reading raw strings. | Autocomplete on LLM responses. |
+-| **Scaling** | Copy-pasting prompts. | Importing typed agent functions. |
+-
+-**Would you like me to add "Memory Management" to this runtime?** We could implement a `ContextStack` that automatically prunes older messages when we reach token limits.
+diff --git a/package.json b/package.json
+index bda3bd9..5abfc15 100644
+--- a/package.json
++++ b/package.json
+@@ -1,14 +1,43 @@
+ {
+-  "name": "lmscript",
++  "name": "@sschepis/lmscript",
+   "version": "0.1.0",
+   "description": "L-Script: A typed runtime for LLM orchestration — compiling structured prompts from TypeScript definitions",
+   "main": "dist/index.js",
++  "module": "dist/index.js",
+   "types": "dist/index.d.ts",
++  "exports": {
++    ".": {
++      "types": "./dist/index.d.ts",
++      "import": "./dist/index.js",
++      "require": "./dist/index.js"
++    },
++    "./testing": {
++      "types": "./dist/testing/index.d.ts",
++      "import": "./dist/testing/index.js",
++      "require": "./dist/testing/index.js"
++    },
++    "./dsl": {
++      "types": "./dist/dsl/index.d.ts",
++      "import": "./dist/dsl/index.js",
++      "require": "./dist/dsl/index.js"
++    }
++  },
+   "bin": {
+-    "lsc": "./dist/src/cli.js"
++    "lsc": "./dist/cli.js"
++  },
++  "files": [
++    "dist",
++    "docs",
++    "README.md",
++    "LICENSE"
++  ],
++  "repository": {
++    "type": "git",
++    "url": "git+https://github.com/sschepis/lmscript.git"
+   },
+   "scripts": {
+     "build": "tsc",
++    "prepublishOnly": "npm run build",
+     "dev": "tsc --watch",
+     "test": "vitest run",
+     "test:watch": "vitest",
+@@ -32,18 +61,26 @@
+     "ai",
+     "typescript",
+     "schema-validation",
+-    "orchestration"
++    "orchestration",
++    "language-model",
++    "structured-output",
++    "zod",
++    "openai",
++    "anthropic"
+   ],
+   "license": "MIT",
+   "dependencies": {
+-    "zod": "^3.25.76",
+     "zod-to-json-schema": "^3.23.0"
+   },
++  "peerDependencies": {
++    "zod": "^3.0.0"
++  },
+   "devDependencies": {
+     "@types/node": "^20.14.0",
+     "tsx": "^4.15.0",
+     "typescript": "^5.5.0",
+-    "vitest": "^1.6.0"
++    "vitest": "^1.6.0",
++    "zod": "^3.25.76"
+   },
+   "engines": {
+     "node": ">=18.0.0"
+diff --git a/src/context.ts b/src/context.ts
+index 895b40e..45e3587 100644
+--- a/src/context.ts
++++ b/src/context.ts
+@@ -1,12 +1,7 @@
+ import type { ChatMessage, ContextStackOptions } from "./types.js";
+-
+-/**
+- * Rough token estimator: ~4 characters per token.
+- * For production use, replace with tiktoken or a model-specific tokenizer.
+- */
+-function estimateTokens(text: string): number {
+-  return Math.ceil(text.length / 4);
+-}
++import type { TokenCounter } from "./tokenizer.js";
++import { estimateTokens as defaultEstimateTokens } from "./tokenizer.js";
++import { estimateContentTokens } from "./content.js";
+ 
+ /** Type for an async summarizer function */
+ export type SummarizerFn = (messages: ChatMessage[]) => Promise<string>;
+@@ -24,10 +19,12 @@ export class ContextStack {
+   private maxTokens: number;
+   private pruneStrategy: "fifo" | "summarize";
+   private summarizer: SummarizerFn | null = null;
++  private tokenCounter: TokenCounter;
+ 
+   constructor(options: ContextStackOptions = {}) {
+     this.maxTokens = options.maxTokens ?? 4096;
+     this.pruneStrategy = options.pruneStrategy ?? "fifo";
++    this.tokenCounter = options.tokenCounter ?? defaultEstimateTokens;
+   }
+ 
+   /**
+@@ -59,7 +56,7 @@ export class ContextStack {
+   /** Get estimated total tokens in the current context. */
+   getTokenCount(): number {
+     return this.messages.reduce(
+-      (sum, msg) => sum + estimateTokens(msg.content),
++      (sum, msg) => sum + estimateContentTokens(msg.content, this.tokenCounter),
+       0
+     );
+   }
+diff --git a/src/dsl/ast.ts b/src/dsl/ast.ts
+index 7dff639..b481a45 100644
+--- a/src/dsl/ast.ts
++++ b/src/dsl/ast.ts
+@@ -3,6 +3,8 @@
+ export interface TypeFieldNode {
+   name: string;
+   type: string;              // "string", "number", "boolean"
++  optional?: boolean;        // field is optional (? syntax)
++  defaultValue?: unknown;    // default value (= value syntax)
+   isArray: boolean;          // string[] → true
+   constraints?: Record<string, number | string>;  // min=1, max=10, maxLength=100
+   enumValues?: string[];     // "positive" | "negative" | "neutral"
+diff --git a/src/dsl/compiler.ts b/src/dsl/compiler.ts
+index dbcf40e..b5f1795 100644
+--- a/src/dsl/compiler.ts
++++ b/src/dsl/compiler.ts
+@@ -81,6 +81,15 @@ function compileField(field: TypeFieldNode): z.ZodType {
+     schema = z.array(schema);
+   }
+ 
++  // Apply default value (makes field effectively optional with a fallback)
++  if (field.defaultValue !== undefined) {
++    schema = schema.default(field.defaultValue);
++  }
++  // Apply optional marker (only if no default, since .default() already implies optional)
++  else if (field.optional) {
++    schema = schema.optional();
++  }
++
+   return schema;
+ }
+ 
+diff --git a/src/dsl/lexer.ts b/src/dsl/lexer.ts
+index 1bbc0b4..2d892f4 100644
+--- a/src/dsl/lexer.ts
++++ b/src/dsl/lexer.ts
+@@ -23,6 +23,7 @@ export enum TokenType {
+   ARROW = "ARROW",         // ->
+   EQUALS = "EQUALS",       // =
+   PIPE = "PIPE",           // |
++  QUESTION = "QUESTION",   // ?
+ 
+   // Special
+   TEMPLATE_VAR = "TEMPLATE_VAR",  // {{var}}
+@@ -371,6 +372,7 @@ export class Lexer {
+       ",": TokenType.COMMA,
+       "=": TokenType.EQUALS,
+       "|": TokenType.PIPE,
++      "?": TokenType.QUESTION,
+     };
+ 
+     const type = symbolMap[ch];
+diff --git a/src/dsl/parser.ts b/src/dsl/parser.ts
+index 795bc53..b749585 100644
+--- a/src/dsl/parser.ts
++++ b/src/dsl/parser.ts
+@@ -73,11 +73,21 @@ export class Parser {
+ 
+   parseTypeField(): TypeFieldNode {
+     const name = this.expect(TokenType.IDENTIFIER, "field name").value;
++
++    // Check for optional marker: fieldName?
++    let optional: boolean | undefined;
++    if (this.check(TokenType.QUESTION)) {
++      this.advance();
++      optional = true;
++    }
++
+     this.expect(TokenType.COLON, ":");
+ 
+     // Check for enum type: "value1" | "value2" | ...
+     if (this.check(TokenType.STRING)) {
+-      return this.parseEnumField(name);
++      const field = this.parseEnumField(name);
++      if (optional) field.optional = true;
++      return field;
+     }
+ 
+     const typeName = this.expect(TokenType.IDENTIFIER, "type name").value;
+@@ -96,7 +106,39 @@ export class Parser {
+       isArray = true;
+     }
+ 
+-    return { name, type: typeName, isArray, constraints };
++    // Check for default value: = value
++    let defaultValue: unknown;
++    if (this.check(TokenType.EQUALS)) {
++      this.advance(); // skip =
++      defaultValue = this.parseDefaultValue();
++    }
++
++    const field: TypeFieldNode = { name, type: typeName, isArray, constraints };
++    if (optional) field.optional = true;
++    if (defaultValue !== undefined) field.defaultValue = defaultValue;
++    return field;
++  }
++
++  private parseDefaultValue(): unknown {
++    if (this.check(TokenType.STRING)) {
++      return this.advance().value;
++    }
++    if (this.check(TokenType.NUMBER)) {
++      return parseFloat(this.advance().value);
++    }
++    // Handle boolean literals (true/false are lexed as IDENTIFIER)
++    if (this.check(TokenType.IDENTIFIER)) {
++      const val = this.current().value;
++      if (val === "true") {
++        this.advance();
++        return true;
++      }
++      if (val === "false") {
++        this.advance();
++        return false;
++      }
++    }
++    throw this.error("Expected default value (string, number, or boolean)");
+   }
+ 
+   private parseEnumField(name: string): TypeFieldNode {
+diff --git a/src/examples/conversational-tutor.ts b/src/examples/conversational-tutor.ts
+index 1309de2..1875c16 100644
+--- a/src/examples/conversational-tutor.ts
++++ b/src/examples/conversational-tutor.ts
+@@ -13,7 +13,7 @@
+  */
+ 
+ import { z } from "zod";
+-import { LScriptRuntime, OpenAIProvider } from "../index.js";
++import { LScriptRuntime, OpenAIProvider, extractText } from "../index.js";
+ import type { LScriptFunction, ChatMessage } from "../index.js";
+ 
+ // ── 1. Define the output schema ─────────────────────────────────────
+@@ -153,7 +153,7 @@ async function main() {
+   console.log("\n  📜 Message roles in history:");
+   finalHistory.forEach((msg: ChatMessage, i: number) => {
+     const roleIcon = msg.role === "user" ? "👤" : msg.role === "assistant" ? "🤖" : "⚙️";
+-    const preview = msg.content.slice(0, 60).replace(/\n/g, " ");
++    const preview = extractText(msg.content).slice(0, 60).replace(/\n/g, " ");
+     console.log(`     ${i + 1}. ${roleIcon} [${msg.role}] ${preview}...`);
+   });
+ 
+diff --git a/src/index.ts b/src/index.ts
+index 5f5b788..3a7ebb3 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -4,6 +4,11 @@
+ export type {
+   ChatMessage,
+   Role,
++  TextContent,
++  ImageUrlContent,
++  ImageBase64Content,
++  ContentBlock,
++  MessageContent,
+   LLMProvider,
+   LLMProviderConfig,
+   LLMRequest,
+@@ -24,15 +29,27 @@ export type {
+   BudgetConfig,
+   ParallelResult,
+   ParallelTaskResult,
++  RetryConfig,
+ } from "./types.js";
+ 
++// Content helpers
++export { extractText } from "./content.js";
++
+ // Runtime
+ export { LScriptRuntime } from "./runtime.js";
+ 
++// Agent loop
++export { AgentLoop } from "./agent.js";
++export type { AgentConfig, AgentResult } from "./agent.js";
++
+ // Context management
+ export { ContextStack } from "./context.js";
+ export type { SummarizerFn } from "./context.js";
+ 
++// Tokenizer
++export { estimateTokens, simpleTokenEstimator } from "./tokenizer.js";
++export type { TokenCounter } from "./tokenizer.js";
++
+ // Session
+ export { Session } from "./session.js";
+ 
+@@ -55,7 +72,17 @@ export { AnthropicProvider } from "./providers/anthropic.js";
+ export { GeminiProvider } from "./providers/gemini.js";
+ export { OllamaProvider } from "./providers/ollama.js";
+ export { LMStudioProvider } from "./providers/lmstudio.js";
++export { OpenRouterProvider } from "./providers/openrouter.js";
++export type { OpenRouterProviderConfig } from "./providers/openrouter.js";
++export { VertexAnthropicProvider } from "./providers/vertex-anthropic.js";
++export type { VertexAnthropicProviderConfig } from "./providers/vertex-anthropic.js";
++export { DeepSeekProvider } from "./providers/deepseek.js";
+ export { FallbackProvider, AllProvidersFailedError } from "./providers/fallback.js";
++export type { FallbackProviderConfig } from "./providers/fallback.js";
++
++// Circuit Breaker
++export { CircuitBreaker } from "./circuit-breaker.js";
++export type { CircuitBreakerConfig, CircuitState } from "./circuit-breaker.js";
+ 
+ // Router
+ export { ModelRouter } from "./router.js";
+@@ -70,6 +97,10 @@ export { MemoryCacheBackend, ExecutionCache } from "./cache.js";
+ // Cost tracking
+ export { CostTracker, BudgetExceededError } from "./cost-tracker.js";
+ 
++// Rate limiting
++export { RateLimiter } from "./rate-limiter.js";
++export type { RateLimitConfig } from "./rate-limiter.js";
++
+ // Structured logging
+ export { Logger, Span, ConsoleTransport, LogLevel } from "./logger.js";
+ export type { LogEntry, LogTransport, LoggerOptions } from "./logger.js";
+@@ -118,3 +149,35 @@ export type {
+   SnapshotDiff,
+   ChaosConfig,
+ } from "./testing/index.js";
++
++// Prompt versioning & A/B testing
++export { PromptRegistry } from "./prompt-registry.js";
++export type { PromptVariant, VariantMetrics, SelectionStrategy, PromptRegistryConfig } from "./prompt-registry.js";
++
++// Telemetry (OpenTelemetry-compatible, no hard dependency)
++export { OTelLogTransport, createTelemetryMiddleware } from "./telemetry.js";
++export type {
++  TelemetrySpan,
++  TelemetryTracer,
++  TelemetryMeter,
++  TelemetryCounter,
++  TelemetryHistogram,
++  TelemetryConfig,
++} from "./telemetry.js";
++
++// Embeddings & RAG
++export { MemoryVectorStore, cosineSimilarity } from "./embeddings.js";
++export type { EmbeddingProvider, VectorDocument, VectorSearchResult, VectorStore } from "./embeddings.js";
++export { RAGPipeline } from "./rag.js";
++export type { RAGConfig, RAGResult } from "./rag.js";
++export { OpenAIEmbeddingProvider } from "./providers/openai-embeddings.js";
++
++// Batch processing
++export { BatchManager } from "./batch.js";
++export type {
++  BatchJobStatus,
++  BatchRequest,
++  BatchRequestResult,
++  BatchJob,
++  BatchManagerConfig,
++} from "./batch.js";
+diff --git a/src/providers/anthropic.ts b/src/providers/anthropic.ts
+index b43236b..3df794f 100644
+--- a/src/providers/anthropic.ts
++++ b/src/providers/anthropic.ts
+@@ -1,5 +1,6 @@
+ import type { LLMRequest, LLMResponse, LLMProviderConfig } from "../types.js";
+ import { BaseLLMProvider } from "./base.js";
++import { extractText, toAnthropicContent } from "../content.js";
+ 
+ interface AnthropicContent {
+   type: "text";
+@@ -48,10 +49,10 @@ export class AnthropicProvider extends BaseLLMProvider {
+       model: request.model,
+       max_tokens: 4096,
+       temperature: request.temperature,
+-      system: systemMessage?.content ?? "",
++      system: systemMessage ? extractText(systemMessage.content) : "",
+       messages: nonSystemMessages.map((m) => ({
+         role: m.role,
+-        content: m.content,
++        content: toAnthropicContent(m.content),
+       })),
+     };
+   }
+diff --git a/src/providers/fallback.ts b/src/providers/fallback.ts
+index 4e0a173..98dc6c2 100644
+--- a/src/providers/fallback.ts
++++ b/src/providers/fallback.ts
+@@ -1,4 +1,9 @@
+ import type { LLMProvider, LLMRequest, LLMResponse } from "../types.js";
++import {
++  CircuitBreaker,
++  type CircuitBreakerConfig,
++  type CircuitState,
++} from "../circuit-breaker.js";
+ 
+ // ── Custom Error ────────────────────────────────────────────────────
+ 
+@@ -18,6 +23,19 @@ export class AllProvidersFailedError extends Error {
+   }
+ }
+ 
++// ── Configuration ───────────────────────────────────────────────────
++
++/**
++ * Configuration for the {@link FallbackProvider}.
++ */
++export interface FallbackProviderConfig {
++  /** Delay between provider attempts in ms */
++  retryDelay?: number;
++
++  /** Circuit breaker configuration. When enabled, failing providers are temporarily disabled. */
++  circuitBreaker?: CircuitBreakerConfig;
++}
++
+ // ── Fallback Provider ───────────────────────────────────────────────
+ 
+ /**
+@@ -26,36 +44,67 @@ export class AllProvidersFailedError extends Error {
+  * If a provider throws (API error, rate limit, network failure),
+  * the error is caught and the next provider is tried. If all fail,
+  * an `AllProvidersFailedError` is thrown with all collected errors.
++ *
++ * When `circuitBreaker` config is provided, each provider is tracked
++ * with an independent circuit breaker. Providers whose circuits are
++ * open are skipped. If ALL circuits are open, the provider whose
++ * circuit has been open the longest is tried as a safety fallback.
+  */
+ export class FallbackProvider implements LLMProvider {
+   readonly name = "fallback";
+ 
+   private providers: LLMProvider[];
+   private retryDelay?: number;
++  private breakers: Map<string, CircuitBreaker> | null = null;
+ 
+   constructor(
+     providers: LLMProvider[],
+-    options?: { retryDelay?: number }
++    options?: FallbackProviderConfig | { retryDelay?: number }
+   ) {
+     if (providers.length === 0) {
+       throw new Error("FallbackProvider requires at least one provider");
+     }
+     this.providers = [...providers];
+     this.retryDelay = options?.retryDelay;
++
++    // Only create circuit breakers when explicitly configured
++    const cbConfig = (options as FallbackProviderConfig)?.circuitBreaker;
++    if (cbConfig) {
++      this.breakers = new Map();
++      for (const p of this.providers) {
++        this.breakers.set(p.name, new CircuitBreaker(cbConfig));
++      }
++    }
+   }
+ 
+   async chat(request: LLMRequest): Promise<LLMResponse> {
+     const errors: Array<{ provider: string; error: Error }> = [];
++    const skippedAll = this.breakers !== null;
++    let anyAllowed = false;
+ 
+     for (let i = 0; i < this.providers.length; i++) {
+       const provider = this.providers[i];
++      const breaker = this.breakers?.get(provider.name);
++
++      // Check circuit breaker if present
++      if (breaker && !breaker.isAllowed()) {
++        errors.push({
++          provider: provider.name,
++          error: new Error("Circuit breaker open"),
++        });
++        continue;
++      }
++
++      anyAllowed = true;
+ 
+       try {
+         const response = await provider.chat(request);
++        breaker?.recordSuccess();
+         return response;
+       } catch (err) {
+         const error = err instanceof Error ? err : new Error(String(err));
+         errors.push({ provider: provider.name, error });
++        breaker?.recordFailure();
+ 
+         // Wait before trying next provider if retryDelay is configured
+         if (this.retryDelay && i < this.providers.length - 1) {
+@@ -64,14 +113,44 @@ export class FallbackProvider implements LLMProvider {
+       }
+     }
+ 
++    // Safety fallback: if all circuits were open, try the one open longest
++    if (skippedAll && !anyAllowed) {
++      const fallbackProvider = this.findLongestOpenProvider();
++      if (fallbackProvider) {
++        try {
++          const response = await fallbackProvider.chat(request);
++          this.breakers!.get(fallbackProvider.name)?.recordSuccess();
++          return response;
++        } catch (err) {
++          const error = err instanceof Error ? err : new Error(String(err));
++          errors.push({ provider: fallbackProvider.name, error });
++          this.breakers!.get(fallbackProvider.name)?.recordFailure();
++        }
++      }
++    }
++
+     throw new AllProvidersFailedError(errors);
+   }
+ 
+   async *chatStream(request: LLMRequest): AsyncIterable<string> {
+     const errors: Array<{ provider: string; error: Error }> = [];
++    const skippedAll = this.breakers !== null;
++    let anyAllowed = false;
+ 
+     for (let i = 0; i < this.providers.length; i++) {
+       const provider = this.providers[i];
++      const breaker = this.breakers?.get(provider.name);
++
++      // Check circuit breaker if present
++      if (breaker && !breaker.isAllowed()) {
++        errors.push({
++          provider: provider.name,
++          error: new Error("Circuit breaker open"),
++        });
++        continue;
++      }
++
++      anyAllowed = true;
+ 
+       // Skip providers that don't support chatStream
+       if (!provider.chatStream) {
+@@ -88,10 +167,12 @@ export class FallbackProvider implements LLMProvider {
+ 
+       try {
+         yield* provider.chatStream(request);
++        breaker?.recordSuccess();
+         return;
+       } catch (err) {
+         const error = err instanceof Error ? err : new Error(String(err));
+         errors.push({ provider: provider.name, error });
++        breaker?.recordFailure();
+ 
+         if (this.retryDelay && i < this.providers.length - 1) {
+           await this.delay(this.retryDelay);
+@@ -99,9 +180,76 @@ export class FallbackProvider implements LLMProvider {
+       }
+     }
+ 
++    // Safety fallback: if all circuits were open, try the one open longest
++    if (skippedAll && !anyAllowed) {
++      const fallbackProvider = this.findLongestOpenProvider();
++      if (fallbackProvider) {
++        if (!fallbackProvider.chatStream) {
++          errors.push({
++            provider: fallbackProvider.name,
++            error: new Error("Provider does not support streaming"),
++          });
++        } else {
++          try {
++            yield* fallbackProvider.chatStream(request);
++            this.breakers!.get(fallbackProvider.name)?.recordSuccess();
++            return;
++          } catch (err) {
++            const error = err instanceof Error ? err : new Error(String(err));
++            errors.push({ provider: fallbackProvider.name, error });
++            this.breakers!.get(fallbackProvider.name)?.recordFailure();
++          }
++        }
++      }
++    }
++
+     throw new AllProvidersFailedError(errors);
+   }
+ 
++  /**
++   * Returns the health status of each provider's circuit breaker.
++   * If circuit breakers are not enabled, all providers report as "closed"
++   * with zero failures.
++   */
++  getProviderHealth(): Array<{
++    name: string;
++    state: CircuitState;
++    failureCount: number;
++  }> {
++    return this.providers.map((p) => {
++      const breaker = this.breakers?.get(p.name);
++      return {
++        name: p.name,
++        state: breaker?.getState() ?? ("closed" as CircuitState),
++        failureCount: breaker?.getFailureCount() ?? 0,
++      };
++    });
++  }
++
++  /**
++   * Find the provider whose circuit has been open the longest
++   * (i.e. the one most likely to have recovered).
++   */
++  private findLongestOpenProvider(): LLMProvider | null {
++    if (!this.breakers) return null;
++
++    let oldest: LLMProvider | null = null;
++    let oldestTime = Infinity;
++
++    for (const provider of this.providers) {
++      const breaker = this.breakers.get(provider.name);
++      if (breaker) {
++        const failureTime = breaker.getLastFailureTime();
++        if (failureTime < oldestTime) {
++          oldestTime = failureTime;
++          oldest = provider;
++        }
++      }
++    }
++
++    return oldest;
++  }
++
+   private delay(ms: number): Promise<void> {
+     return new Promise((resolve) => setTimeout(resolve, ms));
+   }
+diff --git a/src/providers/gemini.ts b/src/providers/gemini.ts
+index 4740e52..2021167 100644
+--- a/src/providers/gemini.ts
++++ b/src/providers/gemini.ts
+@@ -1,8 +1,10 @@
+ import type { LLMRequest, LLMResponse, LLMProviderConfig } from "../types.js";
+ import { BaseLLMProvider } from "./base.js";
++import { toGeminiParts, extractText } from "../content.js";
+ 
+ interface GeminiPart {
+-  text: string;
++  text?: string;
++  inline_data?: { mime_type: string; data: string };
+ }
+ 
+ interface GeminiContent {
+@@ -36,6 +38,7 @@ interface GeminiResponseBody {
+  */
+ export class GeminiProvider extends BaseLLMProvider {
+   readonly name = "gemini";
++  readonly supportsStructuredOutput = true;
+ 
+   constructor(config: LLMProviderConfig) {
+     super(config);
+@@ -73,10 +76,10 @@ export class GeminiProvider extends BaseLLMProvider {
+ 
+     for (const msg of request.messages) {
+       if (msg.role === "system") {
+-        systemInstruction = { parts: [{ text: msg.content }] };
++        systemInstruction = { parts: [{ text: extractText(msg.content) }] };
+       } else {
+         contents.push({
+-          parts: [{ text: msg.content }],
++          parts: toGeminiParts(msg.content) as GeminiPart[],
+           role: msg.role === "assistant" ? "model" : "user",
+         });
+       }
+@@ -93,7 +96,12 @@ export class GeminiProvider extends BaseLLMProvider {
+       body.systemInstruction = systemInstruction;
+     }
+ 
+-    if (request.jsonMode) {
++    if (request.jsonSchema) {
++      (body.generationConfig as Record<string, unknown>).responseMimeType =
++        "application/json";
++      (body.generationConfig as Record<string, unknown>).responseSchema =
++        request.jsonSchema.schema;
++    } else if (request.jsonMode) {
+       (body.generationConfig as Record<string, unknown>).responseMimeType =
+         "application/json";
+     }
+diff --git a/src/providers/index.ts b/src/providers/index.ts
+index 26a47ef..b611c2a 100644
+--- a/src/providers/index.ts
++++ b/src/providers/index.ts
+@@ -4,4 +4,9 @@ export { AnthropicProvider } from "./anthropic.js";
+ export { GeminiProvider } from "./gemini.js";
+ export { OllamaProvider } from "./ollama.js";
+ export { LMStudioProvider } from "./lmstudio.js";
++export { OpenRouterProvider } from "./openrouter.js";
++export type { OpenRouterProviderConfig } from "./openrouter.js";
++export { VertexAnthropicProvider } from "./vertex-anthropic.js";
++export type { VertexAnthropicProviderConfig } from "./vertex-anthropic.js";
++export { DeepSeekProvider } from "./deepseek.js";
+ export { FallbackProvider, AllProvidersFailedError } from "./fallback.js";
+diff --git a/src/providers/lmstudio.ts b/src/providers/lmstudio.ts
+index cd97655..821f7f4 100644
+--- a/src/providers/lmstudio.ts
++++ b/src/providers/lmstudio.ts
+@@ -1,5 +1,6 @@
+ import type { LLMRequest, LLMResponse, LLMProviderConfig } from "../types.js";
+ import { BaseLLMProvider } from "./base.js";
++import { extractText } from "../content.js";
+ 
+ interface OpenAIChoice {
+   message: {
+@@ -62,15 +63,20 @@ export class LMStudioProvider extends BaseLLMProvider {
+   }
+ 
+   protected buildRequestBody(request: LLMRequest): Record<string, unknown> {
++    // LM Studio doesn't support multi-modal — extract text only
+     const body: Record<string, unknown> = {
+       model: request.model,
+-      messages: request.messages,
++      messages: request.messages.map((m) => ({
++        role: m.role,
++        content: extractText(m.content),
++      })),
+       temperature: request.temperature,
+     };
+ 
+-    if (request.jsonMode) {
+-      body.response_format = { type: "json_object" };
+-    }
++    // LM Studio does not support response_format: { type: "json_object" }.
++    // It requires "json_schema" (with a schema payload) or "text".
++    // We omit response_format entirely and rely on the runtime's
++    // system-prompt JSON instruction + Zod validation instead.
+ 
+     if (request.tools && request.tools.length > 0) {
+       body.tools = request.tools.map((t) => ({
+diff --git a/src/providers/ollama.ts b/src/providers/ollama.ts
+index 7979c81..e54f1b3 100644
+--- a/src/providers/ollama.ts
++++ b/src/providers/ollama.ts
+@@ -1,5 +1,6 @@
+ import type { LLMRequest, LLMResponse, LLMProviderConfig } from "../types.js";
+ import { BaseLLMProvider } from "./base.js";
++import { extractText } from "../content.js";
+ 
+ interface OllamaMessage {
+   role: string;
+@@ -39,9 +40,10 @@ export class OllamaProvider extends BaseLLMProvider {
+   }
+ 
+   protected buildRequestBody(request: LLMRequest): Record<string, unknown> {
++    // Ollama doesn't support multi-modal — extract text only
+     const messages: OllamaMessage[] = request.messages.map((m) => ({
+       role: m.role,
+-      content: m.content,
++      content: extractText(m.content),
+     }));
+ 
+     const body: Record<string, unknown> = {
+diff --git a/src/providers/openai.ts b/src/providers/openai.ts
+index 81db55e..fdf3c5f 100644
+--- a/src/providers/openai.ts
++++ b/src/providers/openai.ts
+@@ -1,5 +1,6 @@
+ import type { LLMRequest, LLMResponse, LLMProviderConfig } from "../types.js";
+ import { BaseLLMProvider } from "./base.js";
++import { toOpenAIContent } from "../content.js";
+ 
+ interface OpenAIChoice {
+   message: {
+@@ -28,6 +29,7 @@ interface OpenAIResponseBody {
+  */
+ export class OpenAIProvider extends BaseLLMProvider {
+   readonly name = "openai";
++  readonly supportsStructuredOutput = true;
+ 
+   constructor(config: LLMProviderConfig) {
+     super(config);
+@@ -40,11 +42,23 @@ export class OpenAIProvider extends BaseLLMProvider {
+   protected buildRequestBody(request: LLMRequest): Record<string, unknown> {
+     const body: Record<string, unknown> = {
+       model: request.model,
+-      messages: request.messages,
++      messages: request.messages.map((m) => ({
++        role: m.role,
++        content: toOpenAIContent(m.content),
++      })),
+       temperature: request.temperature,
+     };
+ 
+-    if (request.jsonMode) {
++    if (request.jsonSchema) {
++      body.response_format = {
++        type: "json_schema",
++        json_schema: {
++          name: request.jsonSchema.name,
++          schema: request.jsonSchema.schema,
++          strict: request.jsonSchema.strict ?? true,
++        },
++      };
++    } else if (request.jsonMode) {
+       body.response_format = { type: "json_object" };
+     }
+ 
+diff --git a/src/runtime.ts b/src/runtime.ts
+index 5178b63..d474f6a 100644
+--- a/src/runtime.ts
++++ b/src/runtime.ts
+@@ -11,11 +11,13 @@ import type {
+   LScriptFunction,
+   ParallelResult,
+   ParallelTaskResult,
++  RetryConfig,
+   RuntimeConfig,
+   StreamResult,
+   ToolCall,
+   ToolDefinition,
+ } from "./types.js";
++import type { AgentConfig, AgentResult } from "./agent.js";
+ import { MiddlewareManager } from "./middleware.js";
+ import type { ExecutionCache } from "./cache.js";
+ import { BudgetExceededError } from "./cost-tracker.js";
+@@ -25,9 +27,34 @@ import { diffSchemaResult, formatSchemaDiff } from "./testing/schema-diff.js";
+ import { ContextStack } from "./context.js";
+ import { Session } from "./session.js";
+ import type { OutputTransformer } from "./transformer.js";
++import type { RateLimiter } from "./rate-limiter.js";
+ 
+ const MAX_TOOL_CALL_DEPTH = 5;
+ 
++const DEFAULT_RETRY_CONFIG: Required<RetryConfig> = {
++  baseDelay: 1000,
++  maxDelay: 30000,
++  jitterFactor: 0.2,
++};
++
++/**
++ * Compute the delay before a retry attempt using exponential backoff with jitter.
++ * delay = min(baseDelay * 2^attempt, maxDelay) + random * jitterFactor * delay
++ */
++function computeRetryDelay(attempt: number, config: RetryConfig): number {
++  const baseDelay = config.baseDelay ?? DEFAULT_RETRY_CONFIG.baseDelay;
++  const maxDelay = config.maxDelay ?? DEFAULT_RETRY_CONFIG.maxDelay;
++  const jitterFactor = config.jitterFactor ?? DEFAULT_RETRY_CONFIG.jitterFactor;
++
++  const exponentialDelay = Math.min(baseDelay * Math.pow(2, attempt), maxDelay);
++  const jitter = Math.random() * jitterFactor * exponentialDelay;
++  return exponentialDelay + jitter;
++}
++
++function sleep(ms: number): Promise<void> {
++  return new Promise((resolve) => setTimeout(resolve, ms));
++}
++
+ /**
+  * LScriptRuntime is the core execution engine.
+  *
+@@ -58,6 +85,12 @@ export class LScriptRuntime {
+   /** Structured logger for execution tracing. */
+   private logger: Logger;
+ 
++  /** Optional retry backoff configuration. */
++  private retryConfig?: RetryConfig;
++
++  /** Optional rate limiter for throttling API requests. */
++  private rateLimiter?: RateLimiter;
++
+   constructor(config: RuntimeConfig) {
+     this.provider = config.provider;
+     this.defaultTemperature = config.defaultTemperature ?? 0.7;
+@@ -68,6 +101,8 @@ export class LScriptRuntime {
+     this.costTracker = config.costTracker;
+     this.budget = config.budget;
+     this.logger = config.logger ?? new Logger({ level: LogLevel.SILENT });
++    this.retryConfig = config.retryConfig;
++    this.rateLimiter = config.rateLimiter;
+   }
+ 
+   /**
+@@ -153,9 +188,18 @@ export class LScriptRuntime {
+     // ── Run onBeforeExecute hooks ──
+     await this.middleware.runBeforeExecute(execCtx);
+ 
++    // Resolve retry config: function-level > runtime-level > defaults
++    const effectiveRetryConfig = fn.retryConfig ?? this.retryConfig ?? {};
++
+     let lastError: Error | null = null;
+ 
+     for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
++      // Apply backoff delay before retry attempts (not before the first attempt)
++      if (attempt > 1) {
++        const delay = computeRetryDelay(attempt - 2, effectiveRetryConfig);
++        await sleep(delay);
++      }
++
+       execCtx.attempt = attempt;
+       span.log(LogLevel.DEBUG, `Attempt ${attempt}/${maxRetries + 1}`, { fn: fn.name, model: fn.model, attempt });
+ 
+@@ -183,6 +227,15 @@ export class LScriptRuntime {
+           messages,
+           temperature,
+           jsonMode: true,
++          ...(this.provider.supportsStructuredOutput
++            ? {
++                jsonSchema: {
++                  name: fn.name.replace(/[^a-zA-Z0-9_-]/g, "_"),
++                  schema: jsonSchema as object,
++                  strict: true,
++                },
++              }
++            : {}),
+           ...(requestTools ? { tools: requestTools } : {}),
+         };
+ 
+@@ -342,6 +395,15 @@ export class LScriptRuntime {
+       messages,
+       temperature,
+       jsonMode: true,
++      ...(this.provider.supportsStructuredOutput
++        ? {
++            jsonSchema: {
++              name: fn.name.replace(/[^a-zA-Z0-9_-]/g, "_"),
++              schema: jsonSchema as object,
++              strict: true,
++            },
++          }
++        : {}),
+     };
+ 
+     let accumulated = "";
+@@ -447,6 +509,9 @@ export class LScriptRuntime {
+     let lastUsage: ExecutionResult<unknown>["usage"] = undefined;
+ 
+     for (let depth = 0; depth <= MAX_TOOL_CALL_DEPTH; depth++) {
++      // ── Rate limit: wait for slot before making API call ──
++      await this.rateLimiter?.acquire();
++
+       const response = await this.provider.chat({
+         ...request,
+         messages: currentMessages,
+@@ -454,6 +519,9 @@ export class LScriptRuntime {
+ 
+       lastUsage = response.usage;
+ 
++      // ── Rate limit: report token usage after API call ──
++      this.rateLimiter?.reportTokens(response.usage?.totalTokens ?? 0);
++
+       // If no tool calls in response, return the final response
+       if (!response.toolCalls || response.toolCalls.length === 0 || !tools || tools.length === 0) {
+         return {
+@@ -744,9 +812,18 @@ export class LScriptRuntime {
+ 
+     await this.middleware.runBeforeExecute(execCtx);
+ 
++    // Resolve retry config: function-level > runtime-level > defaults
++    const effectiveRetryConfig = fn.retryConfig ?? this.retryConfig ?? {};
++
+     let lastError: Error | null = null;
+ 
+     for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
++      // Apply backoff delay before retry attempts (not before the first attempt)
++      if (attempt > 1) {
++        const delay = computeRetryDelay(attempt - 2, effectiveRetryConfig);
++        await sleep(delay);
++      }
++
+       execCtx.attempt = attempt;
+ 
+       const messages: ChatMessage[] = [
+@@ -773,6 +850,15 @@ export class LScriptRuntime {
+           messages,
+           temperature,
+           jsonMode: true,
++          ...(this.provider.supportsStructuredOutput
++            ? {
++                jsonSchema: {
++                  name: fn.name.replace(/[^a-zA-Z0-9_-]/g, "_"),
++                  schema: jsonSchema as object,
++                  strict: true,
++                },
++              }
++            : {}),
+           ...(requestTools ? { tools: requestTools } : {}),
+         };
+ 
+@@ -833,6 +919,219 @@ export class LScriptRuntime {
+     throw finalError;
+   }
+ 
++  // ── Agent Loop (Iterative Tool Calling) ─────────────────────────────
++
++  /**
++   * Execute a function with an iterative agent loop.
++   *
++   * Unlike `execute()`, which handles tool calls in a single pass,
++   * `executeAgent()` repeatedly calls the LLM, feeding tool results back
++   * as user messages until the LLM produces a final response with no
++   * tool calls, or `maxIterations` is reached.
++   */
++  async executeAgent<I, O extends z.ZodType>(
++    fn: LScriptFunction<I, O>,
++    input: I,
++    agentConfig?: AgentConfig
++  ): Promise<AgentResult<z.infer<O>>> {
++    const maxIterations = agentConfig?.maxIterations ?? 10;
++    const onToolCall = agentConfig?.onToolCall ?? (() => {});
++    const onIteration = agentConfig?.onIteration ?? (() => {});
++
++    const span = this.logger.startSpan(`executeAgent:${fn.name}`);
++
++    const temperature = fn.temperature ?? this.defaultTemperature;
++    const jsonSchema = zodToJsonSchema(fn.schema, { target: "openApi3" });
++
++    const schemaInstruction = [
++      "YOU MUST RESPOND ONLY WITH VALID JSON.",
++      "YOUR RESPONSE MUST CONFORM TO THIS JSON SCHEMA:",
++      JSON.stringify(jsonSchema, null, 2),
++      "DO NOT include any text outside the JSON object.",
++    ].join("\n");
++
++    const systemContent = `${fn.system}\n\n${schemaInstruction}`;
++    const userContent = fn.prompt(input);
++
++    // Build few-shot example messages if provided
++    const exampleMessages: ChatMessage[] = [];
++    if (fn.examples && fn.examples.length > 0) {
++      for (const example of fn.examples) {
++        exampleMessages.push({
++          role: "user",
++          content: fn.prompt(example.input),
++        });
++        exampleMessages.push({
++          role: "assistant",
++          content: JSON.stringify(example.output),
++        });
++      }
++    }
++
++    // Build tool definitions for the request
++    const requestTools = this.buildRequestTools(fn.tools);
++
++    // Build initial messages
++    const messages: ChatMessage[] = [
++      { role: "system", content: systemContent },
++      ...exampleMessages,
++      { role: "user", content: userContent },
++    ];
++
++    const allToolCalls: ToolCall[] = [];
++    const totalUsage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 };
++    let hasUsage = false;
++    let finalContent = "";
++
++    for (let iteration = 1; iteration <= maxIterations; iteration++) {
++      // ── Rate limit: wait for slot before making API call ──
++      await this.rateLimiter?.acquire();
++
++      const request: LLMRequest = {
++        model: fn.model,
++        messages: [...messages],
++        temperature,
++        jsonMode: true,
++        ...(this.provider.supportsStructuredOutput
++          ? {
++              jsonSchema: {
++                name: fn.name.replace(/[^a-zA-Z0-9_-]/g, "_"),
++                schema: jsonSchema as object,
++                strict: true,
++              },
++            }
++          : {}),
++        ...(requestTools ? { tools: requestTools } : {}),
++      };
++
++      const response = await this.provider.chat(request);
++
++      // ── Rate limit: report token usage after API call ──
++      this.rateLimiter?.reportTokens(response.usage?.totalTokens ?? 0);
++
++      // Accumulate usage
++      if (response.usage) {
++        hasUsage = true;
++        totalUsage.promptTokens += response.usage.promptTokens;
++        totalUsage.completionTokens += response.usage.completionTokens;
++        totalUsage.totalTokens += response.usage.totalTokens;
++      }
++
++      // Track usage with cost tracker
++      if (this.costTracker && response.usage) {
++        this.costTracker.trackUsage(fn.name, response.usage);
++      }
++
++      finalContent = response.content;
++
++      // Call onIteration callback
++      const iterationResult = await Promise.resolve(
++        onIteration(iteration, response.content)
++      );
++      if (iterationResult === false) {
++        span.log(LogLevel.INFO, `Agent loop stopped early by onIteration at iteration ${iteration}`, { fn: fn.name });
++        break;
++      }
++
++      // If no tool calls, this is the final response
++      if (!response.toolCalls || response.toolCalls.length === 0 || !fn.tools || fn.tools.length === 0) {
++        span.log(LogLevel.INFO, `Agent loop completed at iteration ${iteration} (no tool calls)`, { fn: fn.name, iteration });
++        break;
++      }
++
++      // Process tool calls
++      const toolResultParts: string[] = [];
++
++      // Append assistant message
++      messages.push({
++        role: "assistant",
++        content: response.content || JSON.stringify(response.toolCalls),
++      });
++
++      let earlyStop = false;
++
++      for (const tc of response.toolCalls) {
++        const toolDef = fn.tools.find((t) => t.name === tc.name);
++        if (!toolDef) {
++          this.logger.warn(`Unknown tool called: ${tc.name}`, { tool: tc.name });
++          toolResultParts.push(`[${tc.name}]: {"error": "Unknown tool"}`);
++          continue;
++        }
++
++        try {
++          const parsedArgs = JSON.parse(tc.arguments);
++          const validatedArgs = toolDef.parameters.parse(parsedArgs);
++          const toolResult = await Promise.resolve(toolDef.execute(validatedArgs));
++
++          const toolCall: ToolCall = {
++            name: tc.name,
++            arguments: parsedArgs,
++            result: toolResult,
++          };
++          allToolCalls.push(toolCall);
++          toolResultParts.push(`[${tc.name}]: ${JSON.stringify(toolResult)}`);
++
++          // Call onToolCall callback
++          const toolCallResult = await Promise.resolve(onToolCall(toolCall));
++          if (toolCallResult === false) {
++            earlyStop = true;
++            span.log(LogLevel.INFO, `Agent loop stopped early by onToolCall`, { fn: fn.name, tool: tc.name });
++            break;
++          }
++        } catch (err) {
++          const error = err instanceof Error ? err : new Error(String(err));
++          this.logger.error(`Tool execution error for ${tc.name}: ${error.message}`, { tool: tc.name });
++
++          const toolCall: ToolCall = {
++            name: tc.name,
++            arguments: tc.arguments,
++            result: { error: error.message },
++          };
++          allToolCalls.push(toolCall);
++          toolResultParts.push(`[${tc.name}]: {"error": ${JSON.stringify(error.message)}}`);
++        }
++      }
++
++      if (earlyStop) {
++        break;
++      }
++
++      // Append tool results as a user message (portable across providers)
++      messages.push({
++        role: "user",
++        content: `Tool results:\n\n${toolResultParts.join("\n")}\n\nPlease continue with the analysis using these tool results.`,
++      });
++
++      // Check if we've hit max iterations
++      if (iteration === maxIterations) {
++        span.log(LogLevel.WARN, `Agent loop reached maxIterations (${maxIterations})`, { fn: fn.name });
++      }
++    }
++
++    // Parse and validate the final response
++    const parsed = this.parseJSON(finalContent);
++    const validated = fn.schema.safeParse(parsed);
++
++    if (!validated.success) {
++      const zodErrorMsg = validated.error.issues
++        .map((i) => `${i.path.join(".")}: ${i.message}`)
++        .join("; ");
++      span.end();
++      throw new Error(
++        `[lmscript] Agent loop for "${fn.name}" produced invalid output. Error: ${zodErrorMsg}`
++      );
++    }
++
++    span.end();
++
++    return {
++      data: validated.data,
++      toolCalls: allToolCalls,
++      iterations: allToolCalls.length > 0 ? Math.min(maxIterations, allToolCalls.length + 1) : 1,
++      ...(hasUsage ? { usage: totalUsage } : {}),
++    };
++  }
++
+   private log(message: string): void {
+     if (this.verbose) {
+       // eslint-disable-next-line no-console
+diff --git a/src/types.ts b/src/types.ts
+index 225e8bc..8e4bd74 100644
+--- a/src/types.ts
++++ b/src/types.ts
+@@ -3,14 +3,47 @@ import type { MiddlewareManager } from "./middleware.js";
+ import type { ExecutionCache } from "./cache.js";
+ import type { CostTracker } from "./cost-tracker.js";
+ import type { Logger } from "./logger.js";
++import type { RateLimiter } from "./rate-limiter.js";
++import type { TokenCounter } from "./tokenizer.js";
+ 
+ // ── Chat message types ──────────────────────────────────────────────
+ 
+ export type Role = "system" | "user" | "assistant";
+ 
++/** A text content block */
++export interface TextContent {
++  type: "text";
++  text: string;
++}
++
++/** An image content block from a URL */
++export interface ImageUrlContent {
++  type: "image_url";
++  image_url: {
++    url: string;
++    /** How the model should process the image. Default varies by provider. */
++    detail?: "auto" | "low" | "high";
++  };
++}
++
++/** An image content block from base64-encoded data */
++export interface ImageBase64Content {
++  type: "image_base64";
++  /** MIME type (e.g., "image/png", "image/jpeg") */
++  mediaType: string;
++  /** Base64-encoded image data */
++  data: string;
++}
++
++/** A content block in a multi-modal message */
++export type ContentBlock = TextContent | ImageUrlContent | ImageBase64Content;
++
++/** Message content can be a simple string or an array of content blocks */
++export type MessageContent = string | ContentBlock[];
++
+ export interface ChatMessage {
+   role: Role;
+-  content: string;
++  content: MessageContent;
+ }
+ 
+ // ── LLM Provider abstraction ────────────────────────────────────────
+@@ -25,6 +58,13 @@ export interface LLMRequest {
+   messages: ChatMessage[];
+   temperature: number;
+   jsonMode: boolean;
++  /** Optional JSON Schema for native structured output. When provided, providers
++   * that support it will use response_format with json_schema type. */
++  jsonSchema?: {
++    name: string;
++    schema: object;
++    strict?: boolean;
++  };
+   tools?: Array<{ name: string; description: string; parameters: object }>;
+ }
+ 
+@@ -42,6 +82,8 @@ export interface LLMProvider {
+   readonly name: string;
+   chat(request: LLMRequest): Promise<LLMResponse>;
+   chatStream?(request: LLMRequest): AsyncIterable<string>;
++  /** Whether this provider supports native JSON Schema structured output */
++  readonly supportsStructuredOutput?: boolean;
+ }
+ 
+ // ── L-Script Function definition ────────────────────────────────────
+@@ -79,6 +121,20 @@ export interface LScriptFunction<I, O extends z.ZodType> {
+ 
+   /** Optional tool definitions for LLM function calling */
+   tools?: ToolDefinition[];
++
++  /** Optional per-function retry backoff configuration */
++  retryConfig?: RetryConfig;
++}
++
++// ── Retry configuration ─────────────────────────────────────────────
++
++export interface RetryConfig {
++  /** Base delay in ms for exponential backoff. Default: 1000 */
++  baseDelay?: number;
++  /** Maximum delay in ms. Default: 30000 */
++  maxDelay?: number;
++  /** Jitter factor (0-1). Adds randomness to prevent thundering herd. Default: 0.2 */
++  jitterFactor?: number;
+ }
+ 
+ // ── Runtime configuration ───────────────────────────────────────────
+@@ -110,6 +166,12 @@ export interface RuntimeConfig {
+ 
+   /** Optional structured logger for execution tracing */
+   logger?: Logger;
++
++  /** Optional retry backoff configuration */
++  retryConfig?: RetryConfig;
++
++  /** Optional rate limiter for throttling API requests */
++  rateLimiter?: RateLimiter;
+ }
+ 
+ // ── Context / Memory types ──────────────────────────────────────────
+@@ -120,6 +182,9 @@ export interface ContextStackOptions {
+ 
+   /** Strategy for pruning when token limit is reached */
+   pruneStrategy?: "fifo" | "summarize";
++
++  /** Custom token counter. Defaults to built-in estimator. */
++  tokenCounter?: TokenCounter;
+ }
+ 
+ // ── Execution result wrapper ────────────────────────────────────────
+diff --git a/tsconfig.json b/tsconfig.json
+index 16824e0..252daa6 100644
+--- a/tsconfig.json
++++ b/tsconfig.json
+@@ -5,8 +5,8 @@
+     "moduleResolution": "NodeNext",
+     "lib": ["ES2022"],
+     "types": ["node"],
+-    "outDir": "dist",
+-    "rootDir": ".",
++    "outDir": "./dist",
++    "rootDir": "./src",
+     "strict": true,
+     "esModuleInterop": true,
+     "skipLibCheck": true,
+@@ -17,5 +17,5 @@
+     "sourceMap": true
+   },
+   "include": ["src/**/*"],
+-  "exclude": ["node_modules", "dist", "tests"]
++  "exclude": ["node_modules", "dist", "tests", "src/examples"]
+ }

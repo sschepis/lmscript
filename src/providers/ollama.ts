@@ -1,5 +1,6 @@
 import type { LLMRequest, LLMResponse, LLMProviderConfig } from "../types.js";
 import { BaseLLMProvider } from "./base.js";
+import { extractText } from "../content.js";
 
 interface OllamaMessage {
   role: string;
@@ -39,9 +40,10 @@ export class OllamaProvider extends BaseLLMProvider {
   }
 
   protected buildRequestBody(request: LLMRequest): Record<string, unknown> {
+    // Ollama doesn't support multi-modal — extract text only
     const messages: OllamaMessage[] = request.messages.map((m) => ({
       role: m.role,
-      content: m.content,
+      content: extractText(m.content),
     }));
 
     const body: Record<string, unknown> = {

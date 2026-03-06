@@ -13,7 +13,7 @@
  */
 
 import { z } from "zod";
-import { LScriptRuntime, OpenAIProvider } from "../index.js";
+import { LScriptRuntime, OpenAIProvider, extractText } from "../index.js";
 import type { LScriptFunction, ChatMessage } from "../index.js";
 
 // ── 1. Define the output schema ─────────────────────────────────────
@@ -153,7 +153,7 @@ async function main() {
   console.log("\n  📜 Message roles in history:");
   finalHistory.forEach((msg: ChatMessage, i: number) => {
     const roleIcon = msg.role === "user" ? "👤" : msg.role === "assistant" ? "🤖" : "⚙️";
-    const preview = msg.content.slice(0, 60).replace(/\n/g, " ");
+    const preview = extractText(msg.content).slice(0, 60).replace(/\n/g, " ");
     console.log(`     ${i + 1}. ${roleIcon} [${msg.role}] ${preview}...`);
   });
 

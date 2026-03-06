@@ -1,14 +1,43 @@
 {
-  "name": "lmscript",
+  "name": "@sschepis/lmscript",
   "version": "0.1.0",
   "description": "L-Script: A typed runtime for LLM orchestration — compiling structured prompts from TypeScript definitions",
   "main": "dist/index.js",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing/index.d.ts",
+      "import": "./dist/testing/index.js",
+      "require": "./dist/testing/index.js"
+    },
+    "./dsl": {
+      "types": "./dist/dsl/index.d.ts",
+      "import": "./dist/dsl/index.js",
+      "require": "./dist/dsl/index.js"
+    }
+  },
   "bin": {
-    "lsc": "./dist/src/cli.js"
+    "lsc": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "docs",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sschepis/lmscript.git"
   },
   "scripts": {
     "build": "tsc",
+    "prepublishOnly": "npm run build",
     "dev": "tsc --watch",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -32,18 +61,26 @@
     "ai",
     "typescript",
     "schema-validation",
-    "orchestration"
+    "orchestration",
+    "language-model",
+    "structured-output",
+    "zod",
+    "openai",
+    "anthropic"
   ],
   "license": "MIT",
   "dependencies": {
-    "zod": "^3.25.76",
     "zod-to-json-schema": "^3.23.0"
+  },
+  "peerDependencies": {
+    "zod": "^3.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
     "tsx": "^4.15.0",
     "typescript": "^5.5.0",
-    "vitest": "^1.6.0"
+    "vitest": "^1.6.0",
+    "zod": "^3.25.76"
   },
   "engines": {
     "node": ">=18.0.0"

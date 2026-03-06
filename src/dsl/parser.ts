@@ -73,11 +73,21 @@ export class Parser {
 
   parseTypeField(): TypeFieldNode {
     const name = this.expect(TokenType.IDENTIFIER, "field name").value;
+
+    // Check for optional marker: fieldName?
+    let optional: boolean | undefined;
+    if (this.check(TokenType.QUESTION)) {
+      this.advance();
+      optional = true;
+    }
+
     this.expect(TokenType.COLON, ":");
 
     // Check for enum type: "value1" | "value2" | ...
     if (this.check(TokenType.STRING)) {
-      return this.parseEnumField(name);
+      const field = this.parseEnumField(name);
+      if (optional) field.optional = true;
+      return field;
     }
 
     const typeName = this.expect(TokenType.IDENTIFIER, "type name").value;
@@ -96,7 +106,39 @@ export class Parser {
       isArray = true;
     }
 
-    return { name, type: typeName, isArray, constraints };
+    // Check for default value: = value
+    let defaultValue: unknown;
+    if (this.check(TokenType.EQUALS)) {
+      this.advance(); // skip =
+      defaultValue = this.parseDefaultValue();
+    }
+
+    const field: TypeFieldNode = { name, type: typeName, isArray, constraints };
+    if (optional) field.optional = true;
+    if (defaultValue !== undefined) field.defaultValue = defaultValue;
+    return field;
+  }
+
+  private parseDefaultValue(): unknown {
+    if (this.check(TokenType.STRING)) {
+      return this.advance().value;
+    }
+    if (this.check(TokenType.NUMBER)) {
+      return parseFloat(this.advance().value);
+    }
+    // Handle boolean literals (true/false are lexed as IDENTIFIER)
+    if (this.check(TokenType.IDENTIFIER)) {
+      const val = this.current().value;
+      if (val === "true") {
+        this.advance();
+        return true;
+      }
+      if (val === "false") {
+        this.advance();
+        return false;
+      }
+    }
+    throw this.error("Expected default value (string, number, or boolean)");
   }
 
   private parseEnumField(name: string): TypeFieldNode {

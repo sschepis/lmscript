@@ -81,6 +81,15 @@ function compileField(field: TypeFieldNode): z.ZodType {
     schema = z.array(schema);
   }
 
+  // Apply default value (makes field effectively optional with a fallback)
+  if (field.defaultValue !== undefined) {
+    schema = schema.default(field.defaultValue);
+  }
+  // Apply optional marker (only if no default, since .default() already implies optional)
+  else if (field.optional) {
+    schema = schema.optional();
+  }
+
   return schema;
 }
 

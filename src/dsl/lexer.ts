@@ -23,6 +23,7 @@ export enum TokenType {
   ARROW = "ARROW",         // ->
   EQUALS = "EQUALS",       // =
   PIPE = "PIPE",           // |
+  QUESTION = "QUESTION",   // ?
 
   // Special
   TEMPLATE_VAR = "TEMPLATE_VAR",  // {{var}}
@@ -371,6 +372,7 @@ export class Lexer {
       ",": TokenType.COMMA,
       "=": TokenType.EQUALS,
       "|": TokenType.PIPE,
+      "?": TokenType.QUESTION,
     };
 
     const type = symbolMap[ch];

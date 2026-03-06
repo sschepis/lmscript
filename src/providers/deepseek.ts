@@ -1,8 +1,8 @@
 import type { LLMRequest, LLMResponse, LLMProviderConfig } from "../types.js";
 import { BaseLLMProvider } from "./base.js";
-import { extractText } from "../content.js";
+import { toOpenAIContent } from "../content.js";
 
-interface OpenAIChoice {
+interface DeepSeekChoice {
   message: {
     content: string | null;
     tool_calls?: Array<{
@@ -13,70 +13,78 @@ interface OpenAIChoice {
   };
 }
 
-interface OpenAIUsage {
+interface DeepSeekUsage {
   prompt_tokens: number;
   completion_tokens: number;
   total_tokens: number;
+  prompt_cache_hit_tokens?: number;
+  prompt_cache_miss_tokens?: number;
 }
 
-interface OpenAIResponseBody {
-  choices: OpenAIChoice[];
-  usage?: OpenAIUsage;
+interface DeepSeekResponseBody {
+  choices: DeepSeekChoice[];
+  usage?: DeepSeekUsage;
 }
 
 /**
- * Provider for LM Studio local inference server.
+ * Provider for DeepSeek's API (https://platform.deepseek.com).
  *
- * LM Studio exposes an OpenAI-compatible API at
- * `http://localhost:1234/v1/chat/completions` by default.
- * No API key is required for local usage, but the config
- * still accepts one for forward-compatibility.
+ * DeepSeek provides an OpenAI-compatible API with models like
+ * `deepseek-chat` (DeepSeek-V3) and `deepseek-reasoner` (DeepSeek-R1).
+ *
+ * The API is OpenAI-compatible, so the request/response format matches
+ * OpenAI's chat completions API with DeepSeek-specific extensions
+ * (e.g., cache hit/miss token tracking in usage).
  *
  * @example
- * ```ts
- * const provider = new LMStudioProvider({
- *   apiKey: "lm-studio",            // any string; not validated
- *   baseUrl: "http://localhost:1234/v1/chat/completions",
+ * ```typescript
+ * const provider = new DeepSeekProvider({
+ *   apiKey: process.env.DEEPSEEK_API_KEY!,
  * });
+ *
+ * const runtime = new LScriptRuntime({ provider });
+ * const fn: LScriptFunction<string, typeof schema> = {
+ *   name: "Analyze",
+ *   model: "deepseek-chat",          // DeepSeek-V3
+ *   // model: "deepseek-reasoner",   // DeepSeek-R1
+ *   // ...
+ * };
  * ```
  */
-export class LMStudioProvider extends BaseLLMProvider {
-  readonly name = "lmstudio";
+export class DeepSeekProvider extends BaseLLMProvider {
+  readonly name = "deepseek";
+  readonly supportsStructuredOutput = true;
 
-  constructor(config?: Partial<LLMProviderConfig>) {
-    super({
-      apiKey: config?.apiKey ?? "lm-studio",
-      baseUrl: config?.baseUrl,
-    });
+  constructor(config: LLMProviderConfig) {
+    super(config);
   }
 
   protected defaultBaseUrl(): string {
-    return "http://localhost:1234/v1/chat/completions";
-  }
-
-  /**
-   * LM Studio runs locally — authentication is optional.
-   * We still send a Bearer token for compatibility with proxy setups.
-   */
-  protected authHeader(): Record<string, string> {
-    return { Authorization: `Bearer ${this.apiKey}` };
+    return "https://api.deepseek.com/chat/completions";
   }
 
   protected buildRequestBody(request: LLMRequest): Record<string, unknown> {
-    // LM Studio doesn't support multi-modal — extract text only
     const body: Record<string, unknown> = {
       model: request.model,
       messages: request.messages.map((m) => ({
         role: m.role,
-        content: extractText(m.content),
+        content: toOpenAIContent(m.content),
       })),
       temperature: request.temperature,
     };
 
-    // LM Studio does not support response_format: { type: "json_object" }.
-    // It requires "json_schema" (with a schema payload) or "text".
-    // We omit response_format entirely and rely on the runtime's
-    // system-prompt JSON instruction + Zod validation instead.
+    if (request.jsonSchema) {
+      body.response_format = {
+        type: "json_schema",
+        json_schema: {
+          name: request.jsonSchema.name,
+          schema: request.jsonSchema.schema,
+          strict: request.jsonSchema.strict ?? true,
+        },
+      };
+    } else if (request.jsonMode) {
+      body.response_format = { type: "json_object" };
+    }
 
     if (request.tools && request.tools.length > 0) {
       body.tools = request.tools.map((t) => ({
@@ -93,10 +101,10 @@ export class LMStudioProvider extends BaseLLMProvider {
   }
 
   protected parseResponse(json: Record<string, unknown>): LLMResponse {
-    const body = json as unknown as OpenAIResponseBody;
+    const body = json as unknown as DeepSeekResponseBody;
 
     if (!body.choices?.[0]) {
-      throw new Error("[lmstudio] Empty or malformed response from API");
+      throw new Error("[deepseek] Empty or malformed response from API");
     }
 
     const choice = body.choices[0];
@@ -138,12 +146,12 @@ export class LMStudioProvider extends BaseLLMProvider {
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(
-        `[lmstudio] API error ${response.status}: ${errorText}`
+        `[deepseek] API error ${response.status}: ${errorText}`
       );
     }
 
     if (!response.body) {
-      throw new Error("[lmstudio] No response body for streaming");
+      throw new Error("[deepseek] No response body for streaming");
     }
 
     const reader = response.body.getReader();

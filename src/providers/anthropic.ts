@@ -1,5 +1,6 @@
 import type { LLMRequest, LLMResponse, LLMProviderConfig } from "../types.js";
 import { BaseLLMProvider } from "./base.js";
+import { extractText, toAnthropicContent } from "../content.js";
 
 interface AnthropicContent {
   type: "text";
@@ -48,10 +49,10 @@ export class AnthropicProvider extends BaseLLMProvider {
       model: request.model,
       max_tokens: 4096,
       temperature: request.temperature,
-      system: systemMessage?.content ?? "",
+      system: systemMessage ? extractText(systemMessage.content) : "",
       messages: nonSystemMessages.map((m) => ({
         role: m.role,
-        content: m.content,
+        content: toAnthropicContent(m.content),
       })),
     };
   }

@@ -1,0 +1,28 @@
+# Source (compiled output in dist/ is what gets published)
+src/
+
+# Tests
+tests/
+
+# Examples (DSL examples)
+examples/
+
+# Config files
+.gitignore
+.npmignore
+tsconfig.json
+vitest.config.ts
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Dev files
+.env
+.env.*
+*.tsbuildinfo
+coverage/
+*.tgz
