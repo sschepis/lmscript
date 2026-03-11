@@ -546,7 +546,12 @@ export class LScriptRuntime {
         }
 
         try {
-          const parsedArgs = JSON.parse(tc.arguments);
+          // Defensive: if a provider adapter returns arguments as a pre-parsed
+          // object instead of a JSON string, use it directly rather than
+          // calling JSON.parse() which would coerce it to "[object Object]".
+          const parsedArgs = typeof tc.arguments === 'string'
+            ? JSON.parse(tc.arguments)
+            : tc.arguments;
           const validatedArgs = toolDef.parameters.parse(parsedArgs);
           const toolResult = await Promise.resolve(toolDef.execute(validatedArgs));
 
@@ -1133,7 +1138,12 @@ export class LScriptRuntime {
         }
 
         try {
-          const parsedArgs = JSON.parse(tc.arguments);
+          // Defensive: if a provider adapter returns arguments as a pre-parsed
+          // object instead of a JSON string, use it directly rather than
+          // calling JSON.parse() which would coerce it to "[object Object]".
+          const parsedArgs = typeof tc.arguments === 'string'
+            ? JSON.parse(tc.arguments)
+            : tc.arguments;
           const validatedArgs = toolDef.parameters.parse(parsedArgs);
           const toolResult = await Promise.resolve(toolDef.execute(validatedArgs));
 
